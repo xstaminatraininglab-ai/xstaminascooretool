@@ -448,7 +448,11 @@ input.err,select.err{border-color:#ef4444!important}
 
 <!-- BOTTOM BAR -->
 <div id="scorebar"><div class="sb">
-  <div><div class="sb-n" id="sb-n">—</div><div class="sb-l">Score</div></div>
+  <div>
+    <div class="sb-n" id="sb-n">—</div>
+    <div class="sb-l">Score</div>
+    <div id="sb-pct" style="font-size:9px;color:var(--red);font-weight:600;letter-spacing:.5px;min-height:12px"></div>
+  </div>
   <div class="sb-mid">
     <div class="lvbadge lv0" id="sb-badge">🔘 —</div>
     <div class="sb-note" id="sb-note">Inserisci almeno 3 test fisici</div>
@@ -697,6 +701,20 @@ function calc(){
   const badge = el('sb-badge');
   badge.className = 'lvbadge '+LV_CSS[finalLv];
   badge.textContent = LV_ICON[finalLv]+' '+LV_NAME[finalLv];
+  // Update percentile in scorebar (trainer-only view)
+  if(!isNaN(total)&&validN>=3){
+    try{
+      const _h=JSON.parse(localStorage.getItem('xstamina_hist')||'[]');
+      const _b={};
+      _h.forEach(s=>{const n=(s.name||'').toLowerCase();const sc=parseInt(s.total||0);const g=s.gender||'';if(n&&sc>0&&g===g_val&&(!_b[n]||sc>_b[n]))_b[n]=sc;});
+      const _sc=Object.values(_b).filter(v=>v>0);
+      if(_sc.length>=3){
+        const _pct=Math.round(_sc.filter(s=>s<total).length/_sc.length*100);
+        el('sb-pct').textContent=_pct+'° pct '+(_g==='F'?'♀':'♂');
+      } else { el('sb-pct').textContent=''; }
+    }catch(e){el('sb-pct').textContent='';}
+  } else { el('sb-pct').textContent=''; }
+  const g_val=vs('f-gender')||'M', _g=g_val;
   el('sb-note').textContent = validN<3
     ? 'Inserisci almeno 3 test fisici'
     : 'Livello su '+validN+'/4 test · moltiplicatore età ×'+mult;
@@ -878,7 +896,14 @@ function renderHistoryData(sessions, source){
         const dt=new Date(dateRaw.includes('/')?dateRaw.split('/').reverse().join('-'):dateRaw);
         if(!isNaN(dt)) d=dt.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'2-digit'});
       }catch(e){}
-      const scoreRaw=parseInt(s['Score Totale']||s.total||0)||0;
+      // Recalc score with current system if raw data available
+      let scoreRaw=parseInt(s['Score Totale']||s.total||0)||0;
+      if(isGs&&s['Plank sec']&&parseInt(s['Plank sec'])>0){
+        try{
+          const _rd=gsRowToD(s);
+          if(!isNaN(_rd.total)&&_rd.total>0) scoreRaw=_rd.total;
+        }catch(e){}
+      }
       const lvRaw=parseInt(s['Livello']||s.finalLv||0)||0;
       // Determine level from score if finalLv not stored
       const lv=scoreRaw>=76?4:scoreRaw>=64?3:scoreRaw>=50?2:scoreRaw>=33?1:0;
@@ -1404,7 +1429,7 @@ function buildReport(d){
   // Include current session in prediction so 1-session clients see it too
   const _histWithCurrent=[..._clientHistory,{"Score Totale":d.total,"Data Sessione":d.date||new Date().toISOString().slice(0,10)}];
   const prediction=buildPrediction(_histWithCurrent,d.total,d.finalLv);
-  const ranking=buildRanking(d.total, d.gender);
+  const ranking='';
   const charts=buildCharts(_clientHistory);
 
   return `<!DOCTYPE html>
