@@ -739,7 +739,7 @@ function gsRowToD(s){
   return {
     name:      s['Cliente']||s['Nome e Cognome']||s.name||'',
     trainer:   s['Trainer']||'',
-    date:      s['Data Sessione']||'',
+    date:      (()=>{try{const dt=new Date(s['Data Sessione']||'');return isNaN(dt)?'':dt.toISOString().slice(0,10);}catch(e){return '';}})(),
     session:   s['N° Sessione']||'',
     gender,    age, mult,
     height:    s['Altezza']||'',
@@ -811,15 +811,15 @@ function renderHistoryData(sessions, source){
     // Sort by date desc
     let idx_gs_counter=0;
     ss.sort((a,b)=>{
-      const da=a['Data Sessione']||a.date||a._saved||'';
-      const db=b['Data Sessione']||b.date||b._saved||'';
-      return da>db?-1:1;
+      const da=new Date(a['Data Sessione']||a.date||a._saved||0);
+      const db=new Date(b['Data Sessione']||b.date||b._saved||0);
+      return db-da; // newest first
     }).forEach(s=>{
       const idx_gs=isGs?(s._gsIdx!==undefined?s._gsIdx:-1):s._i;
       const dateRaw=s['Data Sessione']||s.date||s._saved||'';
       let d='—';
       try{
-        const dt=new Date(dateRaw.includes('/')?dateRaw.split('/').reverse().join('-'):dateRaw);
+        const dt=new Date(dateRaw); // handles ISO, full date string, dd/MM/yyyy
         if(!isNaN(dt)) d=dt.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'2-digit'});
       }catch(e){}
       const scoreRaw=parseInt(s['Score Totale']||s.total||0)||0;
