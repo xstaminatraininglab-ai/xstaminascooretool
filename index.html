@@ -1398,32 +1398,37 @@ function buildReport(d){
 
   // ── SCORE PREDICTION (sync) ────────────────────────────────────────────
   function buildPrediction(history, curScore, curLv){
-    if(!history||history.length<2||curLv>=4) return '';
-    const sorted=history.slice().sort((a,b)=>{
+    if(curLv>=4) return '';
+    const nextThr=[33,50,64,76][curLv];
+    const nextNm=['ACTIVE','STRONG','ATHLETE','ELITE'][curLv];
+    const ptsLeft=Math.max(0,nextThr-curScore);
+    // Time projection — only if we have 2+ sessions with improving score
+    let projLine='';
+    const sorted=(history||[]).slice().sort((a,b)=>{
       const da=a['Data Sessione']||a.date||'',db=b['Data Sessione']||b.date||'';
       return da>db?1:-1;
     });
     const scores=sorted.map(s=>parseInt(s['Score Totale']||s.total||0)).filter(v=>v>0);
-    if(scores.length<2) return '';
-    const rawAvg=(scores[scores.length-1]-scores[0])/(scores.length-1);
-    if(rawAvg<=0) return '';
-    // Motivating coefficients: reflects reality without discouraging
-    const slow=[1.0,0.88,0.75,0.62][curLv];
-    const projGain=Math.max(0.8, rawAvg*slow);
-    const nextThr=[33,50,64,76][curLv];
-    const ptsLeft=nextThr-curScore;
-    if(ptsLeft<=0) return '';
-    const cyclesLeft=Math.ceil(ptsLeft/projGain);
-    const weeks=cyclesLeft*9;
-    const nextNm=['ACTIVE','STRONG','ATHLETE','ELITE'][curLv];
-    const dt=new Date();dt.setDate(dt.getDate()+weeks*7);
-    const dtStr=dt.toLocaleDateString('it-IT',{month:'long',year:'numeric'});
+    if(scores.length>=2){
+      const rawAvg=(scores[scores.length-1]-scores[0])/(scores.length-1);
+      if(rawAvg>0&&ptsLeft>0){
+        const slow=[1.0,0.88,0.75,0.62][curLv];
+        const projGain=Math.max(0.8,rawAvg*slow);
+        const weeks=Math.ceil(ptsLeft/projGain)*9;
+        const dt=new Date();dt.setDate(dt.getDate()+weeks*7);
+        const dtStr=dt.toLocaleDateString('it-IT',{month:'long',year:'numeric'});
+        projLine=`Progressione media: <strong style="color:#fff">+${rawAvg.toFixed(1)} pt</strong> per ciclo.<br>Se continui così: <strong style="color:#4ade80">~${weeks} settimane</strong> — entro <strong style="color:#fff">${dtStr}</strong>. 💪`;
+      } else if(rawAvg<=0){
+        projLine='<span style="color:#f87171">Score in calo rispetto alla sessione precedente. Analizza i test singoli.</span>';
+      }
+    }
+    const ptsHtml=ptsLeft>0
+      ?`Mancano <strong style="color:#e8320a">${ptsLeft} punti</strong> per raggiungere <strong style="color:#fff">${nextNm}</strong>.`
+      :'<strong style="color:#4ade80">Livello raggiunto! 🎉</strong>';
     return `<div style="background:#1a1a1a;border-left:3px solid #e8320a;border-radius:0 8px 8px 0;padding:14px 16px;margin-bottom:16px">
-      <div style="font-family:'Bebas Neue';font-size:11px;letter-spacing:3px;color:#e8320a;margin-bottom:8px">📈 Proiezione Prossimo Livello</div>
+      <div style="font-family:'Bebas Neue';font-size:11px;letter-spacing:3px;color:#e8320a;margin-bottom:8px">📈 Obiettivo Prossimo Livello</div>
       <div style="font-size:13px;color:#ccc;line-height:1.8">
-        Progressione media: <strong style="color:#fff">+${rawAvg.toFixed(1)} pt</strong> per ciclo.<br>
-        Mancano <strong style="color:#e8320a">${ptsLeft} punti</strong> per <strong style="color:#fff">${nextNm}</strong>.<br>
-        Se continui così: <strong style="color:#4ade80">~${weeks} settimane</strong> — entro <strong style="color:#fff">${dtStr}</strong>. 💪
+        ${ptsHtml}${projLine?'<br>'+projLine:''}
       </div>
     </div>`;
   }
