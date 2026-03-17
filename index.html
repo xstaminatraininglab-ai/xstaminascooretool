@@ -1392,7 +1392,7 @@ function buildReport(d){
     return tw>0?Math.round(ts/tw):NaN;
   }
   const rawScore=calcRawScore(d);
-  const rawScoreHtml=(!isNaN(rawScore)&&rawScore!==d.total)
+  const rawScoreHtml=(!isNaN(rawScore))
     ?`<div style="font-size:11px;color:#999;margin-top:3px">Score assoluto: <strong style="color:#777">${rawScore}</strong> <span style="color:#bbb">(senza compenso età)</span></div>`
     :'';
 
