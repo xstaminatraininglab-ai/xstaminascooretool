@@ -1465,7 +1465,6 @@ td{border-bottom:1px solid #f0eeeb;vertical-align:middle;color:#1a1a1a}tr:last-c
     <div style="font-size:11px;color:#aaa;margin-bottom:18px">${dateL} · Sessione #${d.session}</div>
     <div class="hero-sc">${isNaN(d.total)?'—':d.total}</div>
     <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#999;margin-top:4px">Xstamina Score / 100</div>
-    <div style="font-size:10px;color:#aaa;margin-top:4px">Moltiplicatore età ×${d.mult} · Score max realistico ~85 · 100 è impossibile</div>
   </div>
 
   ${prediction}${ranking}${charts?`<div class="st">Progressione nel Tempo · ${_clientHistory.length} sessioni</div><div class="card" style="padding:16px 16px 6px">${charts}</div>`:''}
