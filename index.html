@@ -404,7 +404,7 @@ input.err,select.err{border-color:#ef4444!important}
 <div class="card">
   <div style="font-size:12px;color:var(--mu);line-height:1.9">
     <strong style="color:var(--tx)">Prossima Misurazione:</strong> nel form, prima delle Note Trainer, c'è il campo <em>Data consigliata</em> (default +4 settimane) e una nota opzionale per l'appuntamento.<br>
-    <strong style="color:var(--tx)">Google Calendar:</strong> dopo aver generato il report, premi il tasto <strong>📅 Calendario</strong> accanto a ↑ Condividi. Si aprono automaticamente due eventi sul Calendario Condiviso Xstamina:<br>
+    <strong style="color:var(--tx)">Google Calendar:</strong> dopo aver generato il report, premi il tasto <strong>📅 Calendario</strong> accanto a ↑ Condividi. Si aprono due eventi su Google Calendar — <strong>seleziona il Calendario Xstamina</strong> in alto a destra nella schermata che si apre, poi clicca Salva:<br>
     &nbsp;&nbsp;• <strong>Sessione di oggi</strong> — nome cliente, score, livello.<br>
     &nbsp;&nbsp;• <strong>Prossima Misurazione</strong> — data impostata nel campo apposito.<br>
     <strong style="color:var(--tx)">Requisito:</strong> il Calendario Xstamina deve essere aggiunto al tuo account Google. Se non l'hai ancora fatto, chiedi a Emilio di condividerlo con la tua email Google.
@@ -472,7 +472,7 @@ input.err,select.err{border-color:#ef4444!important}
     <button id="btn-close-report" onclick="closeReport()">← Torna</button>
     <div id="report-topbar-title">REPORT CLIENTE</div>
     <button id="btn-share" onclick="shareReport()">↑ Condividi</button>
-    <button id="btn-cal" onclick="addToCalendar()" style="background:none;border:1px solid rgba(255,255,255,.2);color:#fff;font-family:'DM Sans',sans-serif;font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer;letter-spacing:.5px">📅 Calendario</button>
+    <button id="btn-cal" onclick="addToCalendar()" title="Si apre Google Calendar — seleziona Calendario Xstamina e premi Salva" style="background:none;border:1px solid rgba(255,255,255,.2);color:#fff;font-family:'DM Sans',sans-serif;font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer;letter-spacing:.5px">📅 Calendario</button>
   </div>
   <iframe id="report-frame" style="flex:1;border:none;width:100%;background:#0d0d0d" scrolling="yes"></iframe>
 </div>
@@ -955,7 +955,7 @@ function viewSessionReport(i){
   _clientHistory=clientSessions.map(x=>({
     "Data Sessione":x.date||'',
     "N° Sessione":x.session||'',
-    "Score Totale":x.total||'',
+    "Score Totale":(function(){try{var r=recalcScore({...x,rowTot:x.rowTot||0,hasPrev:!!(x.pPlank||x.pSquat||x.pPush||x.pRmin),pLean:x.pLean||x.lean||''});return r&&!isNaN(r.total)?r.total:x.total||''}catch(e){return x.total||''}})()||'',
     "Plank sec":x.plank||'',
     "Squat reps":x.squat||'',
     "Push Up reps":x.push||'',
@@ -1179,6 +1179,8 @@ function addToCalendar(){
   var scoreStr=isNaN(_D.total)?"-":String(_D.total);
   var rowStr=_D.rowTot>0?(Math.floor(_D.rowTot/60)+":"+((_D.rowTot%60)<10?"0":"")+(Math.floor(_D.rowTot%60)))+"s":"-";
   var det1="";
+  det1+="⚠️ SALVA NEL CALENDARIO: Xstamina Training Lab\n";
+  det1+="================================\n";
   det1+="XSTAMINA PERFORMANCE SCORE\n";
   det1+="================================\n";
   det1+="Cliente: "+nm+"\n";
@@ -1195,13 +1197,21 @@ function addToCalendar(){
   det1+=(_D.peso?"Peso: "+_D.peso+"kg\n":"");
   det1+="================================\n";
   det1+="Xstamina Training Lab | Via Agri 15, Roma";
-  var title1="Valutazione X-Performance — "+nm+" | "+lv+" ("+scoreStr+")";
+  var title1="🔴 Valutazione X-Performance — "+nm+" | "+lv+" ("+scoreStr+")";
   var url1="https://calendar.google.com/calendar/render?action=TEMPLATE"    +"&text="+encodeURIComponent(title1)    +"&dates="+sd+"T090000/"+sd+"T100000"    +"&details="+encodeURIComponent(det1)    +"&location="+encodeURIComponent("Xstamina Training Lab, Via Agri 15, Roma")    +"&cid=c5e03340f53510dcc0793325c30bfdc6f1469933de909976f5f34fb94f88fac2%40group.calendar.google.com";
+  // Robust nextDate: use field value, fallback to session+28d if empty or =today
   var nd=_D.nextDate;
+  if(!nd||nd<=(_D.date||new Date().toISOString().slice(0,10))){
+    var _base=new Date((_D.date||new Date().toISOString().slice(0,10))+'T12:00:00');
+    _base.setDate(_base.getDate()+28);
+    nd=_base.toISOString().slice(0,10);
+  }
   if(nd){
     var nd2=nd.replace(/-/g,"");
     var det2="";
-    det2+="PROSSIMA VALUTAZIONE XSTAMINA\n";
+    det2+="⚠️ SALVA NEL CALENDARIO: Xstamina Training Lab\n";
+  det2+="================================\n";
+  det2+="PROSSIMA VALUTAZIONE XSTAMINA\n";
     det2+="================================\n";
     det2+="Cliente: "+nm+"\n";
     det2+="Ultimo score: "+scoreStr+" / 99 | Livello: "+lv+"\n";
@@ -1216,7 +1226,7 @@ function addToCalendar(){
     det2+=(_D.fat?"Massa Grassa: "+_D.fat+"%\n":"");
     det2+="================================\n";
     det2+="Xstamina Training Lab | Via Agri 15, Roma";
-    var title2="Valutazione X-Performance — "+nm+" | Obiettivo: superare "+lv;
+    var title2="🔴 Prossima Valutazione — "+nm+" | Obiettivo: "+lv;
     var url2="https://calendar.google.com/calendar/render?action=TEMPLATE"      +"&text="+encodeURIComponent(title2)      +"&dates="+nd2+"T090000/"+nd2+"T100000"      +"&details="+encodeURIComponent(det2)      +"&location="+encodeURIComponent("Xstamina Training Lab, Via Agri 15, Roma")      +"&cid=c5e03340f53510dcc0793325c30bfdc6f1469933de909976f5f34fb94f88fac2%40group.calendar.google.com";
     try{window.open(url1,"_blank")}catch(e){}
     setTimeout(function(){try{window.open(url2,"_blank")}catch(e){}},800);
@@ -1241,7 +1251,7 @@ async function _viewGsReportAsync(idx){
       return {
         'Data Sessione':r['Data Sessione']||'',
         'N° Sessione':r['N° Sessione']||'',
-        'Score Totale':r['Score Totale']||'',
+        'Score Totale':(function(){try{var rr=recalcScore(gsRowToD(r));return rr&&!isNaN(rr.total)?rr.total:r['Score Totale']||""}catch(e){return r['Score Totale']||""}})(),'_rawScore':r['Score Totale']||'',
         'Plank sec':r['Plank sec']||'',
         'Squat reps':r['Squat reps']||'',
         'Push Up reps':r['Push Up reps']||'',
@@ -1383,7 +1393,7 @@ function buildReport(d){
   }
   const rawScore=calcRawScore(d);
   const rawScoreHtml=(!isNaN(rawScore)&&rawScore!==d.total)
-    ?`<div style="font-size:11px;color:#999;margin-top:3px">Score comparativo: <strong style="color:#777">${rawScore}</strong> <span style="color:#bbb">(senza compenso età)</span></div>`
+    ?`<div style="font-size:11px;color:#999;margin-top:3px">Score assoluto: <strong style="color:#777">${rawScore}</strong> <span style="color:#bbb">(senza compenso età)</span></div>`
     :'';
 
   // ── SCORE PREDICTION (sync) ────────────────────────────────────────────
@@ -1500,7 +1510,8 @@ td{border-bottom:1px solid #f0eeeb;vertical-align:middle;color:#1a1a1a}tr:last-c
     <div style="font-size:12px;color:#888;margin-bottom:3px">${d.gender==='F'?'Donna':'Uomo'} · ${d.age} anni · Trainer: ${d.trainer||'—'}</div>
     <div style="font-size:11px;color:#aaa;margin-bottom:18px">${dateL} · Sessione #${d.session}</div>
     <div class="hero-sc">${isNaN(d.total)?'—':d.total}</div>
-    <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#999;margin-top:4px">Xstamina Score / 100</div>
+    <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#999;margin-top:4px">Xstamina Score / 99</div>
+    ${rawScoreHtml}
   </div>
 
   ${prediction}${ranking}${charts?`<div class="st">Progressione nel Tempo · ${_clientHistory.length} sessioni</div><div class="card" style="padding:16px 16px 6px">${charts}</div>`:''}
