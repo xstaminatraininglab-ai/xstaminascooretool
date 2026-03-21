@@ -1174,20 +1174,18 @@ function addToCalendar(){
   if(!_D) return;
   var nm=_D.name||"Cliente";
   var lv=_D.finalLv!==undefined?["STARTER","ACTIVE","STRONG","ATHLETE","ELITE"][_D.finalLv]:"";
+  var nextLv=_D.finalLv!==undefined&&_D.finalLv<4?["ACTIVE","STRONG","ATHLETE","ELITE"][_D.finalLv]:"ELITE";
   var tr=_D.trainer||"";
-  var sd=(_D.date||new Date().toISOString().slice(0,10)).replace(/-/g,"");
   var scoreStr=isNaN(_D.total)?"-":String(_D.total);
-  var rowStr=_D.rowTot>0?(Math.floor(_D.rowTot/60)+":"+((_D.rowTot%60)<10?"0":"")+(Math.floor(_D.rowTot%60)))+"s":"-";
-  var det1="";
-  det1+="⚠️ SALVA NEL CALENDARIO: Xstamina Training Lab\n";
-  det1+="================================\n";
-  det1+="XSTAMINA PERFORMANCE SCORE\n";
-  det1+="================================\n";
-  det1+="Cliente: "+nm+"\n";
+  var rowStr=_D.rowTot>0?(Math.floor(_D.rowTot/60)+":"+( (_D.rowTot%60)<10?"0":"")+Math.floor(_D.rowTot%60))+"s":"-";
+
+  // ── Evento 1: sessione oggi (con orario) ─────────────────────────────
+  var sd=(_D.date||new Date().toISOString().slice(0,10)).replace(/-/g,"");
+  var title1=nm+" — Valutazione | Livello: "+lv+" ("+scoreStr+")";
+  var det1="Cliente: "+nm+"\n";
+  det1+="Trainer: "+(tr||"—")+"\n";
   det1+="Score: "+scoreStr+" / 99 | Livello: "+lv+"\n";
-  det1+=(tr?"Trainer: "+tr+"\n":"");
   det1+="================================\n";
-  det1+="RISULTATI SESSION\n";
   det1+=(_D.plank?"Plank Hold: "+_D.plank+"s\n":"");
   det1+=(_D.squat?"Squat 60s: "+_D.squat+" reps\n":"");
   det1+=(_D.push?"Push Up 60s: "+_D.push+" reps\n":"");
@@ -1197,43 +1195,48 @@ function addToCalendar(){
   det1+=(_D.peso?"Peso: "+_D.peso+"kg\n":"");
   det1+="================================\n";
   det1+="Xstamina Training Lab | Via Agri 15, Roma";
-  var title1="🔴 Valutazione X-Performance — "+nm+" | "+lv+" ("+scoreStr+")";
-  var url1="https://calendar.google.com/calendar/render?action=TEMPLATE"    +"&text="+encodeURIComponent(title1)    +"&dates="+sd+"T090000/"+sd+"T100000"    +"&details="+encodeURIComponent(det1)    +"&location="+encodeURIComponent("Xstamina Training Lab, Via Agri 15, Roma")    +"&cid=c5e03340f53510dcc0793325c30bfdc6f1469933de909976f5f34fb94f88fac2%40group.calendar.google.com";
-  // Robust nextDate: use field value, fallback to session+28d if empty or =today
+  var url1="https://calendar.google.com/calendar/render?action=TEMPLATE"
+    +"&text="+encodeURIComponent(title1)
+    +"&dates="+sd+"T090000/"+sd+"T100000"
+    +"&details="+encodeURIComponent(det1)
+    +"&location="+encodeURIComponent("Xstamina Training Lab, Via Agri 15, Roma")
+    +"&cid=c5e03340f53510dcc0793325c30bfdc6f1469933de909976f5f34fb94f88fac2%40group.calendar.google.com";
+
+  // ── Evento 2: prossima misurazione (tutto il giorno, +28 giorni) ─────
   var nd=_D.nextDate;
   if(!nd||nd<=(_D.date||new Date().toISOString().slice(0,10))){
-    var _base=new Date((_D.date||new Date().toISOString().slice(0,10))+'T12:00:00');
+    var _base=new Date((_D.date||new Date().toISOString().slice(0,10))+"T12:00:00");
     _base.setDate(_base.getDate()+28);
     nd=_base.toISOString().slice(0,10);
   }
-  if(nd){
-    var nd2=nd.replace(/-/g,"");
-    var det2="";
-    det2+="⚠️ SALVA NEL CALENDARIO: Xstamina Training Lab\n";
+  var nd2=nd.replace(/-/g,"");
+  // All-day event: dates format is YYYYMMDD/YYYYMMDD (no time component)
+  var nd2next=(function(){var d=new Date(nd+"T12:00:00");d.setDate(d.getDate()+1);return d.toISOString().slice(0,10).replace(/-/g,"");})();
+  var title2=nm+" — Valutazione | Obiettivo: "+nextLv;
+  var det2="Cliente: "+nm+"\n";
+  det2+="Trainer: "+(tr||"—")+"\n";
+  det2+="Ultimo score: "+scoreStr+" / 99 | Livello attuale: "+lv+"\n";
+  det2+="Obiettivo sessione: raggiungere "+nextLv+"\n";
+  det2+=(_D.nextNote?"Note: "+_D.nextNote+"\n":"");
   det2+="================================\n";
-  det2+="PROSSIMA VALUTAZIONE XSTAMINA\n";
-    det2+="================================\n";
-    det2+="Cliente: "+nm+"\n";
-    det2+="Ultimo score: "+scoreStr+" / 99 | Livello: "+lv+"\n";
-    det2+=(tr?"Trainer: "+tr+"\n":"");
-    det2+=(_D.nextNote?"Note: "+_D.nextNote+"\n":"");
-    det2+="================================\n";
-    det2+="RIFERIMENTO SESSIONE PRECEDENTE\n";
-    det2+=(_D.plank?"Plank: "+_D.plank+"s\n":"");
-    det2+=(_D.squat?"Squat: "+_D.squat+" reps\n":"");
-    det2+=(_D.push?"Push Up: "+_D.push+" reps\n":"");
-    det2+=(_D.rowTot>0?"Row/SkiErg: "+rowStr+"\n":"");
-    det2+=(_D.fat?"Massa Grassa: "+_D.fat+"%\n":"");
-    det2+="================================\n";
-    det2+="Xstamina Training Lab | Via Agri 15, Roma";
-    var title2="🔴 Prossima Valutazione — "+nm+" | Obiettivo: "+lv;
-    var url2="https://calendar.google.com/calendar/render?action=TEMPLATE"      +"&text="+encodeURIComponent(title2)      +"&dates="+nd2+"T090000/"+nd2+"T100000"      +"&details="+encodeURIComponent(det2)      +"&location="+encodeURIComponent("Xstamina Training Lab, Via Agri 15, Roma")      +"&cid=c5e03340f53510dcc0793325c30bfdc6f1469933de909976f5f34fb94f88fac2%40group.calendar.google.com";
-    try{window.open(url1,"_blank")}catch(e){}
-    setTimeout(function(){try{window.open(url2,"_blank")}catch(e){}},800);
-  }else{
-    try{window.open(url1,"_blank")}catch(e){}
-  }
+  det2+=(_D.plank?"Plank Hold: "+_D.plank+"s\n":"");
+  det2+=(_D.squat?"Squat 60s: "+_D.squat+" reps\n":"");
+  det2+=(_D.push?"Push Up 60s: "+_D.push+" reps\n":"");
+  det2+=(_D.rowTot>0?"Row/SkiErg 500m: "+rowStr+"\n":"");
+  det2+=(_D.fat?"Massa Grassa: "+_D.fat+"%\n":"");
+  det2+="================================\n";
+  det2+="Xstamina Training Lab | Via Agri 15, Roma";
+  var url2="https://calendar.google.com/calendar/render?action=TEMPLATE"
+    +"&text="+encodeURIComponent(title2)
+    +"&dates="+nd2+"/"+nd2next
+    +"&details="+encodeURIComponent(det2)
+    +"&location="+encodeURIComponent("Xstamina Training Lab, Via Agri 15, Roma")
+    +"&cid=c5e03340f53510dcc0793325c30bfdc6f1469933de909976f5f34fb94f88fac2%40group.calendar.google.com";
+
+  try{window.open(url1,"_blank")}catch(e){}
+  setTimeout(function(){try{window.open(url2,"_blank")}catch(e){}},800);
 }
+
 
 function viewGsReport(idx){_viewGsReportAsync(parseInt(idx));}
 async function _viewGsReportAsync(idx){
