@@ -1,0 +1,1735 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Xstamina — Score Tool v9</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f5f4f2;--s1:#ffffff;--s2:#f0eeeb;--s3:#e8e5e0;--bd:#ddd9d3;--bd2:#c8c3bc;--red:#e8320a;--tx:#1a1a1a;--mu:#777;--mu2:#aaa;--top:52px;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--tx);font-family:"DM Sans",sans-serif;font-size:15px;line-height:1.5;overflow-x:hidden}
+#topbar{position:fixed;top:0;left:0;right:0;z-index:200;height:var(--top);background:#ffffff;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;padding:0 16px}
+#topbar img{height:30px}
+#t-lv{font-size:11px;color:var(--mu);text-transform:uppercase;letter-spacing:1px}
+#t-num{font-family:"Bebas Neue";font-size:30px;color:var(--red);line-height:1}
+#tabs{position:fixed;top:var(--top);left:0;right:0;z-index:199;display:flex;background:#ffffff;border-bottom:2px solid var(--bd)}
+.tab{flex:1;padding:11px 0;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--mu);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;font-family:"DM Sans",sans-serif}
+.tab.on{color:var(--red);border-bottom-color:var(--red);background:#fff8f6}
+.page{display:none}.page.on{display:block}
+.wrap{max-width:680px;margin:0 auto;padding:16px 14px 140px}
+.st{font-family:"Bebas Neue";font-size:12px;letter-spacing:3px;color:var(--red);text-transform:uppercase;margin:22px 0 8px;padding-bottom:5px;border-bottom:1px solid var(--bd)}
+.card{background:var(--s1);border:1px solid var(--bd);border-radius:8px;padding:14px;margin-bottom:8px}
+.r2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;align-items:start}
+.r3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;align-items:start}
+.r1{margin-bottom:10px}
+.field{display:flex;flex-direction:column;gap:3px}
+label.lbl{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--mu);font-weight:600}
+.hint{font-size:10px;color:var(--mu2)}
+input,select,textarea{background:var(--s2);border:1px solid var(--bd2);border-radius:6px;color:var(--tx);font-family:"DM Sans",sans-serif;font-size:15px;padding:10px 12px;width:100%;-webkit-appearance:none;appearance:none;box-sizing:border-box}input[type=text],input[type=number],input[type=date],select{height:46px;padding:0 12px;line-height:46px}
+
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--red)}
+input::placeholder,textarea::placeholder{color:var(--mu2)}
+input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none}
+input[type=number]{-moz-appearance:textfield}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23666' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center;padding-right:30px}
+select option{background:#ffffff;color:#1a1a1a}
+textarea{resize:vertical;min-height:80px}
+input.err,select.err{border-color:#ef4444!important}
+.note{background:#fff4f1;border:1px solid rgba(232,50,10,.22);border-radius:6px;padding:8px 12px;font-size:12px;color:#555;margin-bottom:10px;line-height:1.5}
+.note strong{color:var(--tx)}
+/* VARIANT BUTTONS - 2 rows of 2 */
+.vtog{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
+.vbtn{padding:8px 6px;border:1px solid var(--bd2);border-radius:6px;background:var(--s2);color:var(--mu);font-size:11px;font-weight:600;cursor:pointer;text-align:center;font-family:"DM Sans",sans-serif;line-height:1.4}
+.vbtn small{font-size:10px;font-weight:400;opacity:.7;display:block}
+.vbtn.on{border-color:var(--red);color:var(--red);background:rgba(232,50,10,.08)}
+.vbtn.hard{border-color:#c0bab4;color:#555;background:#f5f2ee}
+.vbtn.hard.on{border-color:var(--red);color:var(--red);background:#fff4f1}
+.vbtn.easy.on{border-color:#f59e0b;color:#f59e0b;background:rgba(245,158,11,.08)}
+.ptog{display:flex;align-items:center;gap:9px;padding:8px 0 4px;cursor:pointer;font-size:12px;color:var(--mu);user-select:none}
+.ptog input[type=checkbox]{width:15px;height:15px;accent-color:var(--red);cursor:pointer;flex-shrink:0;-webkit-appearance:auto;appearance:auto}
+.pblock{display:none;border-top:1px solid var(--bd);margin-top:10px;padding-top:12px}
+.pblock.open{display:block}
+.plbl{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--mu2);margin-bottom:8px}
+#val-box{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:6px;padding:10px 14px;margin-bottom:10px;display:none}
+#val-box.show{display:block}
+.vt{font-size:12px;font-weight:600;color:#f87171;margin-bottom:4px}
+#val-box ul{padding-left:16px}
+#val-box li{font-size:12px;color:#f87171;margin-bottom:2px}
+/* Netlify banner */
+#netlify-banner{background:rgba(96,165,250,.07);border:1px solid rgba(96,165,250,.2);border-radius:6px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#60a5fa;line-height:1.6}
+#netlify-banner strong{color:#93c5fd}
+#netlify-banner a{color:#60a5fa}
+#genbtn{width:100%;padding:16px;margin-top:12px;background:var(--red);border:none;border-radius:8px;color:#fff;font-family:"Bebas Neue";font-size:22px;letter-spacing:3px;cursor:pointer}
+#scorebar{position:fixed;bottom:0;left:0;right:0;z-index:200;background:#ffffff;border-top:2px solid var(--bd);padding:9px 14px max(10px,env(safe-area-inset-bottom));box-shadow:0 -2px 12px rgba(0,0,0,.07)}
+.sb{max-width:680px;margin:0 auto;display:flex;align-items:center;gap:10px}
+.sb-n{font-family:"Bebas Neue";font-size:36px;color:var(--red);line-height:1;min-width:48px;text-align:center}
+.sb-l{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--mu);text-align:center}
+.sb-mid{flex:1;min-width:0}
+.lvbadge{display:inline-block;padding:4px 10px;border-radius:5px;font-family:"Bebas Neue";font-size:16px;letter-spacing:2px}
+.lv0{background:#e8e5e0;color:#999}.lv1{background:#1a3d2b;color:#4ade80}.lv2{background:#1a2a4d;color:#60a5fa}.lv3{background:#3d2e00;color:#fbbf24}.lv4{background:#2d0a0a;color:#f87171}
+.sb-note{font-size:10px;color:var(--mu);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sb-minis{display:flex;gap:4px;flex-shrink:0}
+.sm{background:var(--s2);border:1px solid var(--bd);border-radius:4px;padding:3px 6px;text-align:center;min-width:36px}
+.sm-v{font-family:"DM Mono";font-size:11px}.sm-l{font-size:8px;text-transform:uppercase;color:#999}
+@media(max-width:420px){.sb-minis{display:none}}
+.hist-empty{padding:30px;text-align:center;color:var(--mu);font-size:13px}
+.hclient{margin-bottom:14px}
+.hname{font-family:"Bebas Neue";font-size:15px;letter-spacing:2px;padding:9px 12px;background:var(--s2);border:1px solid var(--bd);border-radius:6px 6px 0 0;border-bottom:none;display:flex;justify-content:space-between}
+.htable{border:1px solid var(--bd);border-radius:0 0 6px 6px;overflow:hidden}
+.hrow{display:grid;grid-template-columns:70px 32px 44px 1fr 48px 28px;align-items:center;gap:6px;padding:8px 10px;border-bottom:1px solid var(--bd);font-size:11px}
+.hrow:last-child{border:none}
+.hrow2{display:grid;grid-template-columns:72px 28px 44px 1fr 28px;align-items:center;gap:6px;padding:10px 10px;border-bottom:1px solid var(--bd);font-size:12px;transition:background .15s}.hrow2.gs{grid-template-columns:70px 80px 50px 1fr}
+.hrow2:not(.hhead):hover{background:#fff4f1}
+.hrow2:last-child{border:none}
+.hhead{background:var(--s2);font-size:9px;text-transform:uppercase;color:var(--mu);font-weight:600}
+.hdel{background:none;border:1px solid var(--bd);border-radius:3px;color:var(--mu);font-size:10px;padding:2px 5px;cursor:pointer;font-family:"DM Sans",sans-serif}
+.clrbtn{background:none;border:1px solid var(--bd);border-radius:5px;color:var(--mu);font-size:11px;padding:5px 10px;cursor:pointer;font-family:"DM Sans",sans-serif;margin-bottom:10px}
+.bs{display:inline-block;font-family:"Bebas Neue";font-size:10px;padding:2px 5px;border-radius:3px}
+.name-wrap{position:relative}
+#name-dd{display:none;position:absolute;left:0;right:0;top:100%;z-index:500;background:var(--s2);border:1px solid var(--bd2);border-radius:6px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.6);max-height:200px;overflow-y:auto}
+.dd-item{padding:10px 14px;cursor:pointer;font-size:14px;color:var(--tx);border-bottom:1px solid var(--bd)}
+.dd-item:active{background:var(--s3)}
+
+/* REPORT OVERLAY */
+#report-overlay{display:none;position:fixed;inset:0;z-index:9999;background:#0d0d0d;flex-direction:column}
+#report-overlay.show{display:flex}
+#report-topbar{flex-shrink:0;height:56px;background:#1a1a1a;border-bottom:1px solid #2a2a2a;display:flex;align-items:center;justify-content:space-between;padding:0 14px;padding-top:env(safe-area-inset-top)}
+#report-topbar-title{font-family:"Bebas Neue";font-size:18px;letter-spacing:2px;color:#e8e6e1}
+#btn-close-report{background:none;border:1px solid #383838;border-radius:6px;color:#999;font-size:13px;padding:7px 14px;cursor:pointer;font-family:"DM Sans",sans-serif;font-weight:600}
+#btn-share{background:#e8320a;border:none;border-radius:6px;color:#fff;font-family:"Bebas Neue";font-size:18px;letter-spacing:2px;padding:8px 18px;cursor:pointer}
+#report-frame{flex:1;border:none;width:100%;background:#0d0d0d}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <img src="data:image/png;base64,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y2zg+/xTSG216fDb2mL2D3VXs1ARc00XFgEr1goqBjBAOhEDpLMlE9C/vqASDzrmhYPADOljARDEgCCQjqeyoKMYHeusZbDhfzMv34x+vvb7DUdGHGmQK1XzkKT4+kUVyYRZDZVIhIX3bvsGzfVdUsrg6GQMkJ5AUxmFTeEIg7rWV11vfDjxEgOkK6RSSH94vop86f90HYYE5QzNSg09jZ+FTscAISIiJxxXEhGREwYIERE5YYAQEZETBggRETlhgBARkRMGCBEROWGAEBGREwYIERE5YYAQEZETBggRETlhgBARkRMGCBEROWGAEBGREwYIERE5YYAQEZETBggRETlhgBARkRMGCBEROWGAEBGREwYIERE5YYAQEZETBggRETlhgBARkRMGCBEROWGAEBGREwYIERE5YYAQEZETBggRETlhgBARkRMGCBEROWGAEBGREwYIERE5YYAQEZETBggRETlhgBARkRMGCBEROWGAEBGREwYIERE5YYAQEZETBggRETlhgBARkRMGCBEROWGAEBGREwYIERE5YYAQEZETBggRETlhgBARkRMGCBEROWGAEBGREwYIERE5YYAQEZETBggRETlhgBARkRMGCBEROWGAEBGREwYIERE5YYAQEZETBggRETlhgBARkRMGCBEROWGAEBGREwYIERE5YYAQEZETBggRETlhgBARkRMGCBEROWGAEBGREwYIERE5YYAQEZETBggRETlhgBARkRMGCBEROWGAEBGREwYIERE5YYAQEZETBggRETlhgBARkRMGCBEROWGAEBGREwYIERE5YYAQEZETBggRETlhgBARkRMGCBEROWGAEBGREwYIERE5YYAQEZETBggRETlhgBARkRMGCBEROWGAEBGREwYIERE5YYAQEZETBggRETlhgBARkRMGCBEROWGAEBGREwYIERE5YYAQEZETBggRETlhgBARkRMGCBEROWGAEBGREwYIERE5YYAQEZETBggRETlhgBARkRMGCBEROfn/ZBu3xpP+QXcAAAAASUVORK5CYII=" alt="X">
+  <div style="display:flex;align-items:baseline;gap:6px">
+    <div id="t-lv">—</div>
+    <div id="t-num">—</div>
+  </div>
+</div>
+
+<div style="padding-top:calc(var(--top) + 42px)">
+<div id="tabs">
+  <button class="tab on" id="t-ins" onclick="showTab('ins')">📋 Inserimento</button>
+  <button class="tab" id="t-sto" onclick="showTab('sto')">📊 Storico</button>
+  <button class="tab" id="t-istr" onclick="showTab('istr')">📋 Istruzioni</button>
+  <button class="tab" id="t-set" onclick="showTab('set')">⚙️ Setup</button>
+</div>
+
+<!-- INSERIMENTO -->
+<div class="page on" id="page-ins"><div class="wrap">
+
+<div class="st">Dati Cliente</div>
+<div class="card">
+  <div class="r2">
+    <div class="field name-wrap">
+      <label class="lbl">Nome e Cognome *</label>
+      <input id="f-name" type="text" placeholder="Giulia Rossi" oninput="onNameInput()" autocomplete="off">
+      <div id="name-dd"></div>
+    </div>
+    <div class="field">
+      <label class="lbl">Trainer *</label>
+      <select id="f-trainer" onchange="calc()">
+        <option value="">— seleziona —</option>
+        <option>Emilio</option><option>Marlena</option>
+        <option>Alex</option><option>Simon</option><option>Federica</option>
+      </select>
+    </div>
+  </div>
+  <div id="client-st" style="font-size:11px;margin:-4px 0 6px;color:var(--mu)"></div>
+  <div class="r3">
+    <div class="field"><label class="lbl">Data di nascita *</label><input id="f-dob" type="date" oninput="calcAge();calc()" max="2015-01-01"><input id="f-age" type="hidden" value=""></div>
+    <div class="field"><label class="lbl">Genere *</label>
+      <select id="f-gender" onchange="calc()">
+        <option value="">—</option><option value="F">Donna</option><option value="M">Uomo</option>
+      </select>
+    </div>
+    <div class="field"><label class="lbl">Altezza (cm)</label><input id="f-height" type="number" placeholder="168"></div>
+  </div>
+  <div id="f-age-display" style="font-size:11px;color:var(--mu);margin:-4px 0 6px;min-height:0"></div>
+  <div class="r2">
+    <div class="field"><label class="lbl">N° Sessione</label><input id="f-session" type="number" placeholder="1" min="1" oninput="calc()"></div>
+    <div class="field"><label class="lbl">Data sessione</label><input id="f-date" type="date"></div>
+  </div>
+</div>
+
+<div class="st">BIA — Composizione Corporea</div>
+<div class="card">
+  <div class="note"><strong>Punteggio BIA (20% totale):</strong> delta % massa grassa ★ (10%) + delta % massa magra ★ (10%). Prima sessione = neutro, entra dalla seconda in poi.</div>
+  <div class="r2">
+    <div class="field"><label class="lbl">Massa grassa (%) ★</label><input id="f-fat" type="number" step=".1" placeholder="24.5" oninput="calc()"></div>
+    <div class="field"><label class="lbl">Massa magra (%) ★</label><input id="f-lean" type="number" step=".1" placeholder="30.5"></div>
+  </div>
+  <div class="r3">
+    <div class="field"><label class="lbl">Peso (kg)</label><input id="f-peso" type="number" step=".1" placeholder="65.0"></div>
+    <div class="field"><label class="lbl">Grasso viscerale</label><input id="f-visceral" type="number" step=".5" placeholder="8"></div>
+    <div class="field"><label class="lbl">Met. Basale</label><input id="f-bmr" type="number" placeholder="1420"></div>
+  </div>
+  <label class="ptog"><input type="checkbox" id="cb-bia" onchange="togglePrev('pb-bia',this)"> Confronto sessione precedente</label>
+  <div class="pblock" id="pb-bia">
+    <div class="plbl">Sessione precedente — BIA</div>
+    <div class="r3">
+      <div class="field"><label class="lbl">MG % prec. ★</label><input id="p-fat" type="number" step=".1" placeholder="26.0" oninput="calc()"></div>
+      <div class="field"><label class="lbl">MM % prec. ★</label><input id="p-lean" type="number" step=".1" placeholder="74.0"></div>
+      <div class="field"><label class="lbl">Peso prec. (kg)</label><input id="p-peso" type="number" step=".1" placeholder="66.0"></div>
+    </div>
+  </div>
+</div>
+
+<div class="st">Circonferenze (cm) — solo registro</div>
+<div class="card">
+  <div class="r3">
+    <div class="field"><label class="lbl">Vita (ombelico)</label><input id="f-vita" type="number" step=".1" placeholder="72"></div>
+    <div class="field"><label class="lbl">Seno / Torace</label><input id="f-seno" type="number" step=".1" placeholder="88"></div>
+    <div class="field"><label class="lbl">Fianchi</label><input id="f-fianchi" type="number" step=".1" placeholder="94"></div>
+  </div>
+  <div class="r3">
+    <div class="field"><label class="lbl">Girocoscia</label><input id="f-coscia" type="number" step=".1" placeholder="58"></div>
+    <div class="field"><label class="lbl">Coscia media</label><input id="f-coscia2" type="number" step=".1" placeholder="52"></div>
+    <div class="field"><label class="lbl">Braccio</label><input id="f-braccio" type="number" step=".1" placeholder="30"></div>
+  </div>
+  <label class="ptog"><input type="checkbox" id="cb-circ" onchange="togglePrev('pb-circ',this)"> Confronto sessione precedente</label>
+  <div class="pblock" id="pb-circ">
+    <div class="plbl">Sessione precedente — Circonferenze</div>
+    <div class="r3">
+      <div class="field"><label class="lbl">Vita prec.</label><input id="p-vita" type="number" step=".1" placeholder="75"></div>
+      <div class="field"><label class="lbl">Seno prec.</label><input id="p-seno" type="number" step=".1" placeholder="90"></div>
+      <div class="field"><label class="lbl">Fianchi prec.</label><input id="p-fianchi" type="number" step=".1" placeholder="96"></div>
+    </div>
+    <div class="r3">
+      <div class="field"><label class="lbl">Girocoscia prec.</label><input id="p-coscia" type="number" step=".1" placeholder="59"></div>
+      <div class="field"><label class="lbl">Coscia media prec.</label><input id="p-coscia2" type="number" step=".1" placeholder="53"></div>
+      <div class="field"><label class="lbl">Braccio prec.</label><input id="p-braccio" type="number" step=".1" placeholder="31"></div>
+    </div>
+  </div>
+</div>
+
+<div class="st">Test 1 — Plank Hold</div>
+<div class="card">
+  <div class="note"><strong>Standard:</strong> gomiti sotto spalle, corpo rigido. Una volta persa la posizione corretta (bacino che cede, schiena che si incurva) il test deve essere fermato. <strong>Max 300 sec (5 min).</strong></div>
+  <div class="r2">
+    <div class="field"><label class="lbl">Secondi — max 300</label><input id="f-plank" type="number" min="0" max="300" placeholder="68" oninput="clamp('f-plank',300);calc()"></div>
+    <div class="field"><label class="lbl">Fine test per</label>
+      <select id="f-plank-end">
+        <option value="form">Cedimento della forma</option>
+        <option value="time">Limite 5 min raggiunto</option>
+        <option value="vol">Interruzione volontaria</option>
+      </select>
+    </div>
+  </div>
+  <label class="ptog"><input type="checkbox" id="cb-plank" onchange="togglePrev('pb-plank',this)"> Dati sessione precedente</label>
+  <div class="pblock" id="pb-plank">
+    <div class="plbl">Sessione precedente</div>
+    <div class="r2"><div class="field"><label class="lbl">Plank prec. (sec)</label><input id="p-plank" type="number" placeholder="55" oninput="calc()"></div></div>
+  </div>
+</div>
+
+<div class="st">Test 2 — Squat 60 sec</div>
+<div class="card">
+  <div class="note"><strong>Standard:</strong> touch wallball alla profondità parallela, risalita completa. Solo reps corrette in 60 sec.</div>
+  <div class="vtog">
+    <div class="vbtn easy on" id="sq-a" onclick="setV('sq','std')">Squat Standard<small>corpo libero · ×1.00</small></div>
+    <div class="vbtn easy" id="sq-b" onclick="setV('sq','sup')">Squat Supportato<small>panca · ×0.85 ↓</small></div>
+    <div class="vbtn hard" id="sq-c" onclick="setV('sq','z5')">Squat + Zavorra 5 kg<small>gilet/manubri · ×1.20 ↑</small></div>
+    <div class="vbtn hard" id="sq-d" onclick="setV('sq','z10')">Squat + Zavorra 10 kg<small>bilanciere/gilet · ×1.35 ↑</small></div>
+  </div>
+  <div class="r1"><div class="field"><label class="lbl">Ripetizioni corrette in 60 sec</label><input id="f-squat" type="number" min="0" max="120" placeholder="22" oninput="calc()"></div></div>
+  <label class="ptog"><input type="checkbox" id="cb-squat" onchange="togglePrev('pb-squat',this)"> Dati sessione precedente</label>
+  <div class="pblock" id="pb-squat">
+    <div class="plbl">Sessione precedente</div>
+    <div class="r2">
+      <div class="field"><label class="lbl">Reps prec.</label><input id="p-squat" type="number" placeholder="18" oninput="calc()"></div>
+      <div class="field"><label class="lbl">Variante prec.</label>
+        <select id="p-sq-var">
+          <option value="std">Standard</option><option value="sup">Supportato</option>
+          <option value="z5">+5 kg</option><option value="z10">+10 kg</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="st">Test 3 — Push Up 60 sec</div>
+<div class="card">
+  <div class="note"><strong>Standard:</strong> petto tocca terra, risalita completa, braccia estese, corpo rigido.</div>
+  <div class="vtog" style="grid-template-columns:1fr 1fr 1fr">
+    <div class="vbtn easy on" id="pu-a" onclick="setV('pu','std')">Push Up Completo<small>punte dei piedi · ×1.00</small></div>
+    <div class="vbtn easy" id="pu-b" onclick="setV('pu','mod')">Push Up Modified<small>ginocchia · ×0.80 ↓</small></div>
+    <div class="vbtn hard" id="pu-c" onclick="setV('pu','elev')">Piedi Elevati (~30 cm)<small>box/step · ×1.20 ↑</small></div>
+  </div>
+  <div class="r1"><div class="field"><label class="lbl">Ripetizioni valide in 60 sec</label><input id="f-push" type="number" min="0" max="100" placeholder="12" oninput="calc()"></div></div>
+  <label class="ptog"><input type="checkbox" id="cb-push" onchange="togglePrev('pb-push',this)"> Dati sessione precedente</label>
+  <div class="pblock" id="pb-push">
+    <div class="plbl">Sessione precedente</div>
+    <div class="r2">
+      <div class="field"><label class="lbl">Reps prec.</label><input id="p-push" type="number" placeholder="8" oninput="calc()"></div>
+      <div class="field"><label class="lbl">Variante prec.</label>
+        <select id="p-pu-var">
+          <option value="std">Completo</option><option value="mod">Modified</option>
+          <option value="elev">Piedi elevati</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="st">Test 4 — Row / SkiErg 500m</div>
+<div class="card">
+  <div class="note"><strong>PM5:</strong> Select Workout → New Workout → Fixed Distance → 500m. <strong>Damper livello 5.</strong></div>
+  <div class="vtog" style="grid-template-columns:1fr 1fr">
+    <div class="vbtn on" id="rw-a" onclick="setV('row','rw')">RowErg (Vogatore)<small>predefinito · ×1.00</small></div>
+    <div class="vbtn hard" id="rw-b" onclick="setV('row','ski')">SkiErg<small>coeff. ×0.88</small></div>
+  </div>
+  <div class="r2">
+    <div class="field"><label class="lbl">Minuti</label><input id="f-rmin" type="number" min="0" max="9" placeholder="2" oninput="calc()"></div>
+    <div class="field"><label class="lbl">Secondi</label><input id="f-rsec" type="number" min="0" max="59" placeholder="38" oninput="calc()"></div>
+  </div>
+  <label class="ptog"><input type="checkbox" id="cb-row" onchange="togglePrev('pb-row',this)"> Dati sessione precedente</label>
+  <div class="pblock" id="pb-row">
+    <div class="plbl">Sessione precedente</div>
+    <div class="r3">
+      <div class="field"><label class="lbl">Min prec.</label><input id="p-rmin" type="number" placeholder="2" oninput="calc()"></div>
+      <div class="field"><label class="lbl">Sec prec.</label><input id="p-rsec" type="number" placeholder="52" oninput="calc()"></div>
+      <div class="field"><label class="lbl">Attrezzo prec.</label><select id="p-row-var"><option value="rw">RowErg</option><option value="ski">SkiErg</option></select></div>
+    </div>
+  </div>
+</div>
+
+<div class="st">Prossima Misurazione</div>
+<div class="card">
+  <div class="r2">
+    <div class="field">
+      <label class="lbl">Data consigliata</label>
+      <input type="date" id="f-next-date">
+    </div>
+    <div class="field">
+      <label class="lbl">Nota appuntamento</label>
+      <input type="text" id="f-next-note" placeholder="es. Portare scarpe sportive">
+    </div>
+  </div>
+</div>
+
+<div class="st">Note del Trainer</div>
+<div class="card">
+  <div class="field"><label class="lbl">Commento — appare nel report cliente</label>
+    <textarea id="f-note" placeholder="es. Ottima progressione sullo squat. Prossime sessioni: focus sul vogatore e push up."></textarea>
+  </div>
+</div>
+
+<div id="val-box"><div class="vt">⚠ Campi mancanti</div><ul id="val-list"></ul></div>
+<button id="genbtn" onclick="doGenerate()">⬇ GENERA REPORT CLIENTE</button>
+
+</div></div><!-- /ins -->
+
+<!-- STORICO -->
+<div class="page" id="page-sto"><div class="wrap">
+  <div class="st">Storico Locale</div>
+  <div id="hist-content"><div class="hist-empty">Nessuna sessione salvata.</div></div>
+</div></div>
+
+<!-- ISTRUZIONI -->
+<div class="page" id="page-istr"><div class="wrap">
+
+<div class="st">Protocollo Test — Istruzioni Trainer</div>
+<div class="card" style="padding:0">
+  <div style="padding:14px;border-bottom:1px solid var(--bd)">
+    <div style="font-family:'Bebas Neue';font-size:13px;letter-spacing:2px;color:#60a5fa;margin-bottom:8px">TEST 0 — BIA + CIRCONFERENZE</div>
+    <div style="font-size:12px;color:var(--mu);line-height:1.8">
+      <strong style="color:var(--tx)">Quando:</strong> Prima di qualsiasi test fisico, a riposo, preferibilmente al mattino a stomaco vuoto.<br>
+      <strong style="color:var(--tx)">BIA:</strong> Cliente senza scarpe, calze e oggetti metallici. Non eseguire dopo attività fisica intensa, in stato di disidratazione o nel periodo mestruale.<br>
+      <strong style="color:var(--tx)">Registra:</strong> % massa grassa ★ e % massa magra ★ (entrambe entrano nel punteggio dalla 2ª sessione: 10% + 10%), peso kg, grasso viscerale, Met. Basale.<br>
+      <strong style="color:var(--tx)">Circonferenze:</strong> Vita all'ombelico (espira naturalmente), seno/torace sul punto più largo, fianchi sul punto più largo, girocoscia sul punto massimo, coscia media a metà femore, braccio rilassato sul punto massimo. Sempre stesso lato, stessa postura.
+    </div>
+  </div>
+  <div style="padding:14px;border-bottom:1px solid var(--bd)">
+    <div style="font-family:'Bebas Neue';font-size:13px;letter-spacing:2px;color:#4ade80;margin-bottom:8px">TEST 1 — PLANK HOLD</div>
+    <div style="font-size:12px;color:var(--mu);line-height:1.8">
+      <strong style="color:var(--tx)">Posizione:</strong> Gomiti direttamente sotto le spalle, avambracci a terra, corpo perfettamente allineato dalla testa ai talloni.<br>
+      <strong style="color:var(--tx)">Esecuzione:</strong> Contrazione attiva di addome e glutei. Testa neutrale, sguardo verso il basso.<br>
+      <strong style="color:var(--tx)">Stop immediato se:</strong> il bacino cede verso il basso o si solleva, la schiena si incurva, le spalle cedono o il collo si iperestende.<br>
+      <strong style="color:var(--tx)">Limite massimo:</strong> 300 secondi (5 minuti). Al raggiungimento il test si interrompe automaticamente.<br>
+      <strong style="color:var(--tx)">Registra:</strong> secondi totali e motivo di interruzione (cedimento forma / limite 5 min / interruzione volontaria).
+    </div>
+  </div>
+  <div style="padding:14px;border-bottom:1px solid var(--bd)">
+    <div style="font-family:'Bebas Neue';font-size:13px;letter-spacing:2px;color:#fbbf24;margin-bottom:8px">TEST 2 — SQUAT 60 SEC</div>
+    <div style="font-size:12px;color:var(--mu);line-height:1.8">
+      <strong style="color:var(--tx)">Setup:</strong> Posiziona una wallball contro il muro all'altezza che corrisponde alla profondità parallela del cliente (coscia parallela al suolo).<br>
+      <strong style="color:var(--tx)">Esecuzione:</strong> Piedi larghezza spalle, punte leggermente extraruotate. Discesa fino al touch della wallball, risalita completa con ginocchia estese. Nessuna pausa in basso.<br>
+      <strong style="color:var(--tx)">Rep valida:</strong> touch confermato + risalita completa. Non contare rep parziali.<br>
+      <strong style="color:var(--tx)">Varianti:</strong> Supportato (panca) per chi non riesce la profondità parallela ×0.85 | +5 kg (gilet o manubri tenuti al petto) ×1.20 | +10 kg (bilanciere frontale o gilet) ×1.35.<br>
+      <strong style="color:var(--tx)">Registra:</strong> solo reps corrette in 60 secondi e variante utilizzata.
+    </div>
+  </div>
+  <div style="padding:14px;border-bottom:1px solid var(--bd)">
+    <div style="font-family:'Bebas Neue";font-size:13px;letter-spacing:2px;color:#f87171;margin-bottom:8px">TEST 3 — PUSH UP 60 SEC</div>
+    <div style="font-size:12px;color:var(--mu);line-height:1.8">
+      <strong style="color:var(--tx)">Posizione standard:</strong> Mani larghezza spalle, braccia estese, corpo rigido dalla testa ai talloni, punte dei piedi a terra.<br>
+      <strong style="color:var(--tx)">Esecuzione:</strong> Discesa fino al tocco del petto a terra, risalita completa con braccia estese. Corpo rigido in ogni fase — no bacino che cede, no intrarotazione delle spalle.<br>
+      <strong style="color:var(--tx)">Rep valida:</strong> petto tocca terra + risalita completa con braccia estese. Non contare rep parziali.<br>
+      <strong style="color:var(--tx)">Varianti:</strong> Modified (ginocchia a terra) per chi non riesce la versione completa ×0.80 | Piedi elevati su box ~30 cm per aumentare il carico sulla parte superiore ×1.20.<br>
+      <strong style="color:var(--tx)">Registra:</strong> solo reps valide in 60 secondi e variante utilizzata.
+    </div>
+  </div>
+  <div style="padding:14px">
+    <div style="font-family:'Bebas Neue';font-size:13px;letter-spacing:2px;color:#e8320a;margin-bottom:8px">TEST 4 — ROW / SKIERG 500m</div>
+    <div style="font-size:12px;color:var(--mu);line-height:1.8">
+      <strong style="color:var(--tx)">Setup RowErg:</strong> PM5 acceso → Select Workout → New Workout → Fixed Distance → 500m. Damper al livello 5. Pioli regolati in modo che le ginocchia siano a 90° nella fase di catch.<br>
+      <strong style="color:var(--tx)">Setup SkiErg:</strong> Stessa procedura sul PM5. Il coefficiente ×0.88 viene applicato automaticamente dal sistema.<br>
+      <strong style="color:var(--tx)">Esecuzione RowErg:</strong> Fase drive: spinta con le gambe → apertura del busto → trazione delle braccia fino all'ombelico. Fase recovery: braccia avanti → busto in avanti → gambe che si piegano. Ritmo controllato, non isterico.<br>
+      <strong style="color:var(--tx)">Warm up:</strong> consigliato 2-3 minuti di vogata leggera prima del test.<br>
+      <strong style="color:var(--tx)">Registra:</strong> tempo esatto dal display PM5 in formato min:sec.
+    </div>
+  </div>
+</div>
+
+<div class="st">Note Generali</div>
+<div class="card">
+  <div style="font-size:12px;color:var(--mu);line-height:1.9">
+    <strong style="color:var(--tx)">Ordine dei test:</strong> BIA → Plank → Squat → Push Up → Row/SkiErg. Seguire sempre quest'ordine.<br>
+    <strong style="color:var(--tx)">Riposo tra test:</strong> minimo 3 minuti tra un test fisico e l'altro.<br>
+    <strong style="color:var(--tx)">Frequenza valutazione:</strong> ogni ciclo di 8–10 sessioni per avere dati significativi.<br>
+    <strong style="color:var(--tx)">Abbigliamento:</strong> scarpe da ginnastica, abbigliamento sportivo non restrittivo.<br>
+    <strong style="color:var(--tx)">Stato del cliente:</strong> non eseguire la valutazione dopo sessioni di allenamento intense o in stato di stanchezza acuta. Almeno 24h di riposo prima della valutazione.
+  </div>
+</div>
+
+</div>
+
+<div class="st">Calendario Misurazione</div>
+<div class="card">
+  <div style="font-size:12px;color:var(--mu);line-height:1.9">
+    <strong style="color:var(--tx)">Prossima Misurazione:</strong> nel form, prima delle Note Trainer, c'è il campo <em>Data consigliata</em> (default +4 settimane) e una nota opzionale per l'appuntamento.<br>
+    <strong style="color:var(--tx)">Google Calendar:</strong> dopo aver generato il report, premi il tasto <strong>📅 Calendario</strong> accanto a ↑ Condividi. Si aprono due eventi su Google Calendar — <strong>seleziona il Calendario Xstamina</strong> in alto a destra nella schermata che si apre, poi clicca Salva:<br>
+    &nbsp;&nbsp;• <strong>Sessione di oggi</strong> — nome cliente, score, livello.<br>
+    &nbsp;&nbsp;• <strong>Prossima Misurazione</strong> — data impostata nel campo apposito.<br>
+    <strong style="color:var(--tx)">Requisito:</strong> il Calendario Xstamina deve essere aggiunto al tuo account Google. Se non l'hai ancora fatto, chiedi a Emilio di condividerlo con la tua email Google.
+  </div>
+</div>
+
+</div></div><!-- /istr -->
+
+<!-- SETUP -->
+<div class="page" id="page-set"><div class="wrap">
+  <div class="st">Sincronizzazione Multi-Dispositivo</div>
+  <div class="card">
+    <div id="netlify-banner">
+      <strong>⚡ Come far funzionare lo storico su tutti i dispositivi</strong><br><br>
+      Il problema attuale: il file aperto localmente non riesce a scrivere su Google Sheets per limiti di sicurezza del browser.<br><br>
+      <strong>Soluzione definitiva — Netlify (gratuito, 3 minuti):</strong><br>
+      1. Vai su <strong>netlify.com</strong> → Sign up (con Google)<br>
+      2. Clicca <strong>"Add new site" → "Deploy manually"</strong><br>
+      3. <strong>Trascina</strong> il file <em>Xstamina_ScoreTool_v9.html</em> nella zona di upload<br>
+      4. Ottieni un URL tipo <strong>xstamina-studio.netlify.app</strong><br>
+      5. Condividi quell'URL con tutti i trainer — tutti vedono gli stessi clienti<br><br>
+      Una volta su Netlify: lo storico funziona, i dati arrivano su Google Sheets, il Condividi funziona su iOS.
+    </div>
+  </div>
+  <div class="st">Stato Connessione Google Sheets</div>
+  <div class="card">
+    <div id="gs-test-result" style="font-size:13px;color:var(--mu);margin-bottom:10px">Clicca per verificare...</div>
+    <button onclick="testGsConnection()" style="background:var(--s2);border:1px solid var(--bd2);border-radius:6px;color:var(--tx);font-size:14px;padding:10px 16px;cursor:pointer;font-family:'DM Sans',sans-serif;width:100%">🔗 Testa connessione Google Sheets</button>
+  </div>
+  <div class="st">Esporta / Importa Storico Locale</div>
+  <div class="card">
+    <div class="hint" style="margin-bottom:10px">Esporta il tuo storico locale come file JSON per condividerlo con altri trainer o fare un backup.</div>
+    <div style="display:flex;gap:8px">
+      <button onclick="exportHistory()" style="flex:1;background:var(--s2);border:1px solid var(--bd2);border-radius:6px;color:var(--tx);font-size:13px;padding:10px;cursor:pointer;font-family:'DM Sans',sans-serif">📤 Esporta storico</button>
+      <label style="flex:1;background:var(--s2);border:1px solid var(--bd2);border-radius:6px;color:var(--tx);font-size:13px;padding:10px;cursor:pointer;text-align:center;font-family:'DM Sans',sans-serif">📥 Importa storico<input type="file" accept=".json" onchange="importHistory(this)" style="display:none"></label>
+    </div>
+  </div>
+</div></div>
+
+</div><!-- /padding-top -->
+
+<!-- BOTTOM BAR -->
+<div id="scorebar"><div class="sb">
+  <div>
+    <div class="sb-n" id="sb-n">—</div>
+    <div class="sb-l">Score</div>
+    <div id="sb-pct" style="font-size:9px;color:var(--red);font-weight:600;letter-spacing:.5px;min-height:12px"></div>
+  </div>
+  <div class="sb-mid">
+    <div class="lvbadge lv0" id="sb-badge">🔘 —</div>
+    <div class="sb-note" id="sb-note">Inserisci almeno 3 test fisici</div>
+  </div>
+  <div class="sb-minis">
+    <div class="sm"><div class="sm-v" id="sm-b">—</div><div class="sm-l">BIA</div></div>
+    <div class="sm"><div class="sm-v" id="sm-p">—</div><div class="sm-l">Plank</div></div>
+    <div class="sm"><div class="sm-v" id="sm-s">—</div><div class="sm-l">Squat</div></div>
+    <div class="sm"><div class="sm-v" id="sm-u">—</div><div class="sm-l">Push</div></div>
+    <div class="sm"><div class="sm-v" id="sm-r">—</div><div class="sm-l">Row</div></div>
+  </div>
+</div></div>
+
+<!-- REPORT OVERLAY -->
+<div id="report-overlay">
+  <div id="report-topbar">
+    <button id="btn-close-report" onclick="closeReport()">← Torna</button>
+    <div id="report-topbar-title">REPORT CLIENTE</div>
+    <button id="btn-share" onclick="shareReport()">↑ Condividi</button>
+    <button id="btn-cal" onclick="addToCalendar()" title="Si apre Google Calendar — seleziona Calendario Xstamina e premi Salva" style="background:none;border:1px solid rgba(255,255,255,.2);color:#fff;font-family:'DM Sans',sans-serif;font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer;letter-spacing:.5px">📅 Calendario</button>
+  </div>
+  <iframe id="report-frame" style="flex:1;border:none;width:100%;background:#0d0d0d" scrolling="yes"></iframe>
+</div>
+
+<script>
+// ══════ CONFIG ══════
+const GS_URL = "https://script.google.com/macros/s/AKfycbwf_Jyh83VtK3gzIzYkQcjP2SNqTshoflDIo-1ijyhnkveauS70K9xBejKx-hBhgVbWwQ/exec";
+
+// ══════ STORAGE ══════
+const Store = {
+  get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},
+  set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}},
+  remove(k){try{localStorage.removeItem(k)}catch(e){}}
+};
+
+// ══════ CONSTANTS ══════
+const LV_NAME=['STARTER','ACTIVE','STRONG','ATHLETE','ELITE'];
+const LV_ICON=['🔘','🟢','🔵','🟡','⚫'];
+const LV_CSS=['lv0','lv1','lv2','lv3','lv4'];
+const LV_BG=['#2a2a2a','#1a3d2b','#1a2a4d','#3d2e00','#2d0a0a'];
+const LV_COL=['#999','#4ade80','#60a5fa','#fbbf24','#f87171'];
+const LV_BDR=['#333','#166534','#1e3a5f','#5a4200','#5a1a1a'];
+// Benefits TBD — section removed from report
+
+// ══════ SCORING ══════
+// best = theoretical max, unreachable by normal clients → 100 is impossible
+const BEST  = {plank:350, squat:100, push:80, rowM:70, rowF:100};
+const WORST = {plank:0,   squat:0,   push:0,  rowM:200, rowF:230}; // row worst same for both genders
+
+// Thresholds for level assignment (raw adjusted value)
+const THR = {
+  plank:{F:[40,80,140,210], M:[55,100,160,230]},
+  squat:{F:[18,30,44,60],   M:[22,36,50,68]},
+  push: {F:[7,14,24,36],    M:[12,22,34,48]},
+  row:  {F:[200,170,140,115], M:[180,150,120,98]},
+};
+
+// Variant coefficients
+const SQ_COEFF = {std:1.0, sup:0.85, z5:1.20, z10:1.35};
+const PU_COEFF = {std:1.0, mod:0.80, elev:1.20, pike:1.40};
+const ROW_COEFF = {rw:1.0, ski:0.88};
+
+// ══════ STATE ══════
+const V = {sq:'std', pu:'std', row:'rw'};
+let _D=null, _clientHistory=[], _loadedClient=null, _allScores=[], _clientNames=[], _nameTimer=null,_gsAllSessions=[];
+let _currentReportHtml='';
+
+// ══════ HELPERS ══════
+function el(id){return document.getElementById(id)}
+function vf(id){return parseFloat(el(id).value)}
+function vs(id){return el(id).value.trim()}
+function clamp(id,max){const e=el(id);if(parseFloat(e.value)>max)e.value=max}
+// Ricalcola score con il sistema di valutazione ATTUALE dai dati grezzi
+function recalcScore(d){
+  if(!d) return d;
+  const mult = ageMult(parseInt(d.age)||42);
+  const g    = d.gender||'M';
+  const sqC  = SQ_COEFF[d.sqVariant]||1;
+  const puC  = PU_COEFF[d.puVariant]||1;
+  const rowC = ROW_COEFF[d.rowVariant]||1;
+
+  const plank = parseFloat(d.plank)||0;
+  const squat = parseFloat(d.squat)||0;
+  const push  = parseFloat(d.push)||0;
+  const rowTot= parseFloat(d.rowTot)||0;
+  const rowAdj= rowTot * rowC;
+  const fat   = parseFloat(d.fat)||NaN;
+  const lean  = parseFloat(d.lean)||NaN;
+  const prevFat  = parseFloat(d.prevFat)||NaN;
+  const prevLean = parseFloat(d.pLean||d.prevLean)||NaN;
+
+  const sPl  = normScore(plank, 'plank', mult, 1.0, g);
+  const sSq  = normScore(squat, 'squat', mult, sqC,  g);
+  const sPu  = normScore(push,  'push',  mult, puC,  g);
+  const sRow = rowAdj>0 ? normScore(rowAdj,'row', mult, 1.0, g) : NaN;
+
+  let sBia=NaN, sLean=NaN;
+  if(!isNaN(fat)){
+    sBia = (d.hasPrev&&!isNaN(prevFat)&&prevFat>0)
+      ? Math.min(99,Math.max(0,50+(prevFat-fat)*8)) : 50;
+  }
+  if(!isNaN(lean)){
+    sLean = (d.hasPrev&&!isNaN(prevLean)&&prevLean>0)
+      ? Math.min(99,Math.max(0,50+(lean-prevLean)*8)) : 50;
+  }
+
+  const biaCk = d.hasPrev;
+  const fatPct  = (biaCk&&!isNaN(sBia) &&sBia !==50) ? 0.10 : 0;
+  const leanPct = (biaCk&&!isNaN(sLean)&&sLean!==50) ? 0.10 : 0;
+  const phyTotal = 1 - fatPct - leanPct;
+
+  const items = [
+    [sBia,fatPct],[sLean,leanPct],
+    [sPl, phyTotal*0.25],[sSq,phyTotal*0.25],
+    [sPu, phyTotal*0.25],[sRow,phyTotal*0.25],
+  ];
+  let tw=0,ts=0;
+  items.forEach(([s,w])=>{if(!isNaN(s)&&w>0){ts+=s*w;tw+=w;}});
+  const total = tw>0 ? Math.round(ts/tw) : NaN;
+  const finalLv = isNaN(total)?0:total>=76?4:total>=64?3:total>=50?2:total>=33?1:0;
+
+  // Count valid physical tests
+  const validN = [plank,squat,push,rowAdj].filter(v=>v>0).length;
+
+  return {...d, sPl,sSq,sPu,sRow,sBia,sLean,total,finalLv,mult,sqC,puC,rowC,rowAdj,validN};
+}
+
+function ageMult(a){return a<=34?.85:a<=49?1:a<=64?1.12:a<=74?1.25:1.40}
+
+function normScore(val, test, mult, coeff, gender){
+  if(isNaN(val)||val<=0) return NaN;
+  const adj  = val * coeff;
+  const adjM = test==='row' ? adj/mult : adj*mult;
+  if(test==='row'){
+    const bestRow  = (gender==='M') ? BEST.rowM  : BEST.rowF;
+    const worstRow = (gender==='M') ? WORST.rowM : WORST.rowF; // M:3:20 F:3:50
+    const ratio = Math.max(0, (worstRow - adjM) / (worstRow - bestRow));
+    return Math.min(99, Math.pow(ratio, 1.5) * 99); // steep power curve — elite requires real speed
+  }
+  return Math.min(99, Math.max(0, adjM / BEST[test] * 100));
+}
+
+function getLevel(adjVal, test, g){
+  const t = THR[test][g] || THR[test]['F'];
+  if(test==='row') return adjVal>t[0]?0:adjVal>t[1]?1:adjVal>t[2]?2:adjVal>t[3]?3:4;
+  return adjVal>=t[3]?4:adjVal>=t[2]?3:adjVal>=t[1]?2:adjVal>=t[0]?1:0;
+}
+
+function fmtT(s){if(!s||s<=0)return '—';const m=Math.floor(s/60),sc=Math.round(s%60);return m+':'+(sc<10?'0':'')+sc}
+function fmtN(x){return isNaN(x)?'—':Math.round(x)}
+function fn(x){return(!x||x===''||isNaN(parseFloat(x)))?'—':x}
+
+// ══════ UI ══════
+function showTab(t){
+  ['ins','sto','istr','set'].forEach(x=>{
+    el('t-'+x).classList.toggle('on',x===t);
+    el('page-'+x).classList.toggle('on',x===t);
+  });
+  if(t==='sto') renderHistory();
+}
+
+function setV(test, val){
+  V[test]=val;
+  if(test==='sq')  ['a','b','c','d'].forEach((l,i)=>el('sq-'+l).classList.toggle('on',['std','sup','z5','z10'][i]===val));
+  if(test==='pu')  ['a','b','c','d'].forEach((l,i)=>el('pu-'+l).classList.toggle('on',['std','mod','elev','pike'][i]===val));
+  if(test==='row') {el('rw-a').classList.toggle('on',val==='rw');el('rw-b').classList.toggle('on',val==='ski')}
+  calc();
+}
+
+function togglePrev(id,cb){el(id).classList.toggle('open',cb.checked);calc()}
+
+// ══════ CALC ══════
+function calc(){
+  const age   = vf('f-age')||42;
+  const g     = vs('f-gender')||'F';
+  const mult  = ageMult(age);
+  const sqC   = SQ_COEFF[V.sq]  || 1;
+  const puC   = PU_COEFF[V.pu]  || 1;
+  const rowC  = ROW_COEFF[V.row]|| 1;
+
+  const hasPrev = el('cb-bia').checked;
+  const fat=vf('f-fat'), prevFat=vf('p-fat');
+  const plank=vf('f-plank'), squat=vf('f-squat'), push=vf('f-push');
+  const rmin=vf('f-rmin'), rsec=vf('f-rsec');
+  const rowTot = (isNaN(rmin)?0:rmin)*60 + (isNaN(rsec)?0:rsec);
+  const rowAdj = rowTot * rowC;
+
+  const lean=vf('f-lean'), prevLean=vf('p-lean');
+  let sBia=NaN, sLean=NaN;
+  if(!isNaN(fat)){
+    sBia = (hasPrev&&!isNaN(prevFat)&&prevFat>0)
+      ? Math.min(99, Math.max(0, 50+(prevFat-fat)*8)) : 50;
+  }
+  if(!isNaN(lean)){
+    sLean = (hasPrev&&!isNaN(prevLean)&&prevLean>0)
+      ? Math.min(99, Math.max(0, 50+(lean-prevLean)*8)) : 50;
+  }
+
+  const sPl  = normScore(plank, 'plank', mult, 1.0, g);
+  const sSq  = normScore(squat, 'squat', mult, sqC,  g);
+  const sPu  = normScore(push,  'push',  mult, puC,  g);
+  const sRow = rowTot>0 ? normScore(rowAdj,'row', mult, 1.0, g) : NaN;
+
+  // Weights: 4 tests ×20% + fat delta 10% + lean delta 10%
+  // BIA components active only from 2nd session onward
+  const biaCk = el('cb-bia').checked;
+  const fatPct  = (biaCk && !isNaN(sBia)  && sBia !==50) ? 0.10 : 0;
+  const leanPct = (biaCk && !isNaN(sLean) && sLean!==50) ? 0.10 : 0;
+  const biaTot  = fatPct + leanPct;
+  const phyTotal = 1 - biaTot;
+  const items = [
+    [sBia,  fatPct],
+    [sLean, leanPct],
+    [sPl,  phyTotal * 0.25],
+    [sSq,  phyTotal * 0.25],
+    [sPu,  phyTotal * 0.25],
+    [sRow, phyTotal * 0.25],
+  ];
+  let tw=0,ts=0;
+  items.forEach(([s,w])=>{if(!isNaN(s)){ts+=s*w;tw+=w}});
+  const total = tw>0 ? Math.round(ts/tw) : NaN;
+
+  // Count valid physical tests
+  const physTests = [
+    {v:!isNaN(plank)?plank:NaN, t:'plank'},
+    {v:!isNaN(squat)?squat:NaN, t:'squat'},
+    {v:!isNaN(push)?push:NaN,   t:'push'},
+    {v:rowAdj>0?rowAdj:NaN,     t:'row'},
+  ];
+  let validN=0;
+  physTests.forEach(({v})=>{if(!isNaN(v)&&v>0) validN++});
+  // Level from total score — non-linear bands (harder at top)
+  // STARTER <33 | ACTIVE 33-49 | STRONG 50-63 | ATHLETE 64-75 | ELITE 76+
+  let finalLv=0;
+  if(!isNaN(total)){
+    if(total>=76) finalLv=4;
+    else if(total>=64) finalLv=3;
+    else if(total>=50) finalLv=2;
+    else if(total>=33) finalLv=1;
+    else finalLv=0;
+  }
+
+  el('sb-n').textContent = isNaN(total)?'—':total;
+  el('t-num').textContent = isNaN(total)?'—':total;
+  el('t-lv').textContent  = validN>=3 ? LV_NAME[finalLv] : '—';
+  const badge = el('sb-badge');
+  badge.className = 'lvbadge '+LV_CSS[finalLv];
+  badge.textContent = LV_ICON[finalLv]+' '+LV_NAME[finalLv];
+  // Update percentile in scorebar (trainer-only view)
+  if(!isNaN(total)&&validN>=3){
+    try{
+      const _h=JSON.parse(localStorage.getItem('xstamina_hist')||'[]');
+      const _b={};
+      _h.forEach(s=>{const n=(s.name||'').toLowerCase();const sc=parseInt(s.total||0);const g=s.gender||'';if(n&&sc>0&&g===g_val&&(!_b[n]||sc>_b[n]))_b[n]=sc;});
+      const _sc=Object.values(_b).filter(v=>v>0);
+      if(_sc.length>=3){
+        const _pct=Math.round(_sc.filter(s=>s<total).length/_sc.length*100);
+        el('sb-pct').textContent=_pct+'° pct '+(_g==='F'?'♀':'♂');
+      } else { el('sb-pct').textContent=''; }
+    }catch(e){el('sb-pct').textContent='';}
+  } else { el('sb-pct').textContent=''; }
+  const g_val=vs('f-gender')||'M', _g=g_val;
+  el('sb-note').textContent = validN<3
+    ? 'Inserisci almeno 3 test fisici'
+    : 'Livello su '+validN+'/4 test · moltiplicatore età ×'+mult;
+  el('sm-b').textContent=fmtN(sBia); el('sm-p').textContent=fmtN(sPl);
+  el('sm-s').textContent=fmtN(sSq);  el('sm-u').textContent=fmtN(sPu);
+  el('sm-r').textContent=fmtN(sRow);
+
+  _D = {total,finalLv,sBia,sPl,sSq,sPu,sRow,age,gender:g,mult,hasPrev,fat,prevFat,
+    plank,squat,push,rowTot,rowAdj,sqVariant:V.sq,puVariant:V.pu,rowVariant:V.row,
+    sqC,puC,rowC,validN,
+    name:vs('f-name'),trainer:vs('f-trainer'),date:vs('f-date'),session:vs('f-session')||'1',dob:vs('f-dob'),sLean,
+    height:vs('f-height'),peso:vs('f-peso'),lean:vs('f-lean'),visceral:vs('f-visceral'),bmr:vs('f-bmr'),
+    vita:vs('f-vita'),seno:vs('f-seno'),fianchi:vs('f-fianchi'),coscia:vs('f-coscia'),
+    coscia2:vs('f-coscia2'),braccio:vs('f-braccio'),
+    pFat:vs('p-fat'),pLean:vs('p-lean'),pPeso:vs('p-peso'),
+    pVita:vs('p-vita'),pSeno:vs('p-seno'),pFianchi:vs('p-fianchi'),
+    pCoscia:vs('p-coscia'),pCoscia2:vs('p-coscia2'),pBraccio:vs('p-braccio'),
+    pPlank:vs('p-plank'),pSquat:vs('p-squat'),pPush:vs('p-push'),
+    pRmin:vs('p-rmin'),pRsec:vs('p-rsec'),
+    hasPrevCirc:el('cb-circ').checked, plankEnd:vs('f-plank-end'),
+    note:el('f-note').value,nextDate:vs('f-next-date'),nextNote:vs('f-next-note')};
+}
+
+// ══════ VALIDATION ══════
+function validate(){
+  const errors=[];
+  if(!_D.name)    errors.push('Nome e Cognome obbligatorio');
+  if(!vs('f-dob')) errors.push('Data di nascita obbligatoria');
+  if(!vs('f-gender')) errors.push('Genere obbligatorio');
+  if(_D.validN<3) errors.push('Inserisci almeno 3 test fisici');
+  ['f-name','f-gender'].forEach(id=>el(id).classList.toggle('err',!vs(id)));el('f-dob').classList.toggle('err',!vs('f-dob'));
+  const box=el('val-box');
+  if(errors.length){
+    el('val-list').innerHTML=errors.map(e=>`<li>${e}</li>`).join('');
+    box.classList.add('show');
+    box.scrollIntoView({behavior:'smooth',block:'nearest'});
+    return false;
+  }
+  box.classList.remove('show'); return true;
+}
+
+// ══════ LOCAL HISTORY ══════
+function getHist(){return Store.get('xstamina_hist')||[]}
+function saveHist(h){Store.set('xstamina_hist',h)}
+function addSession(d){const h=getHist();h.push({...d,_saved:new Date().toISOString()});saveHist(h)}
+function delSession(i){if(!confirm('Eliminare?'))return;const h=getHist();h.splice(i,1);saveHist(h);renderHistory()}
+function clearHist(){if(!confirm('Cancellare tutto?'))return;Store.remove('xstamina_hist');renderHistory()}
+
+function exportHistory(){
+  const h=getHist();
+  if(!h.length){alert('Nessuno storico da esportare');return}
+  const blob=new Blob([JSON.stringify(h,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='Xstamina_Storico_'+new Date().toISOString().slice(0,10)+'.json';
+  document.body.appendChild(a);a.click();
+  setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(a.href)},300);
+}
+
+function importHistory(input){
+  const file=input.files[0]; if(!file)return;
+  const r=new FileReader();
+  r.onload=e=>{
+    try{
+      const data=JSON.parse(e.target.result);
+      if(!Array.isArray(data)){alert('File non valido');return}
+      const existing=getHist();
+      // merge by _saved timestamp
+      const keys=new Set(existing.map(s=>s._saved||s.name+s.date+s.session));
+      const toAdd=data.filter(s=>!keys.has(s._saved||s.name+s.date+s.session));
+      saveHist([...existing,...toAdd]);
+      alert(`Importati ${toAdd.length} nuovi record.`);
+      renderHistory();
+    }catch(err){alert('Errore lettura file: '+err.message)}
+  };
+  r.readAsText(file);
+}
+
+// Convert a GSheets row object back to _D format for buildReport
+function gsRowToD(s){
+  const lvMap={'STARTER':0,'ACTIVE':1,'STRONG':2,'ATHLETE':3,'ELITE':4};
+  const finalLv = lvMap[s['Livello']] !== undefined ? lvMap[s['Livello']] : 0;
+  const gender  = s['Genere']==='Donna'?'F':'M';
+  const age     = parseInt(s['Età']||42);
+  const mult    = ageMult(age);
+  // Parse row time
+  const rowStr  = s['Row min:sec']||'';
+  const rowParts= rowStr.split(':');
+  const rowTot  = rowParts.length===2 ? parseInt(rowParts[0])*60+parseInt(rowParts[1]) : 0;
+  const pRowStr = s['Row Precedente']||'';
+  const pRowP   = pRowStr.split(':');
+  const sqVMap  = {'Supportato':'sup','+5 kg':'z5','+10 kg':'z10','Standard':'std'};
+  const puVMap  = {'Modified':'mod','Piedi elevati':'elev','Pike':'pike','Completo':'std'};
+  const prevFat = parseFloat(s['MG% Precedente'])||0;
+  const raw = {
+    name:      s['Cliente']||s['Nome e Cognome']||s.name||'',
+    trainer:   s['Trainer']||'',
+    date:      s['Data Sessione']||'',
+    session:   s['N° Sessione']||'',
+    gender,    age, mult,
+    height:    s['Altezza']||'',
+    total:     parseInt(s['Score Totale'])||0,
+    finalLv,
+    sBia:      parseFloat(s['Score BIA'])||NaN,
+    sLean:     NaN,
+    sPl:       parseFloat(s['Score Plank'])||NaN,
+    sSq:       parseFloat(s['Score Squat'])||NaN,
+    sPu:       parseFloat(s['Score Push'])||NaN,
+    sRow:      parseFloat(s['Score Row'])||NaN,
+    fat:       s['Massa Grassa %']||'',
+    lean:      s['Massa Magra %']||'',
+    peso:      s['Peso kg']||'',
+    visceral:  s['Grasso Viscerale']||'',
+    bmr:       s['Metabolismo Basale']||'',
+    prevFat,
+    hasPrev:   prevFat>0,
+    plank:     parseInt(s['Plank sec'])||0,
+    plankEnd:  s['Plank Fine']||'',
+    pPlank:    s['Plank Precedente']||'',
+    squat:     parseInt(s['Squat reps'])||0,
+    sqVariant: sqVMap[s['Squat Variante']]||'std',
+    sqC:       s['Squat Variante']==='Supportato'?.85:s['Squat Variante']==='+5 kg'?1.2:s['Squat Variante']==='+10 kg'?1.35:1,
+    pSquat:    s['Squat Precedente']||'',
+    push:      parseInt(s['Push Up reps'])||0,
+    puVariant: puVMap[s['Push Variante']]||'std',
+    puC:       s['Push Variante']==='Modified'?.8:s['Push Variante']==='Piedi elevati'?1.2:1,
+    pPush:     s['Push Precedente']||'',
+    rowTot,    rowAdj: rowTot,
+    rowVariant: s['Row Attrezzo']==='SkiErg'?'ski':'rw',
+    rowC:      s['Row Attrezzo']==='SkiErg'?.88:1,
+    pRmin:     pRowP.length===2?pRowP[0]:'',
+    pRsec:     pRowP.length===2?pRowP[1]:'',
+    vita:      s['Vita cm']||'', seno:s['Seno cm']||'',
+    fianchi:   s['Fianchi cm']||'', coscia:s['Girocoscia cm']||'',
+    coscia2:   s['Coscia Media cm']||'', braccio:s['Braccio cm']||'',
+    pVita:'',pSeno:'',pFianchi:'',pCoscia:'',pCoscia2:'',pBraccio:'',
+    hasPrevCirc:false,
+    note:      s['Note Trainer']||'',
+    validN:    [s['Plank sec'],s['Squat reps'],s['Push Up reps'],rowTot>0?1:0].filter(v=>parseInt(v)>0).length,
+    nextDate:'', nextNote:''
+  };
+  return recalcScore(raw);
+}
+
+function renderHistoryData(sessions, source){
+  const cont=el('hist-content');
+  if(!sessions||!sessions.length){
+    cont.innerHTML='<div class="hist-empty">Nessuna sessione trovata.</div>';
+    return;
+  }
+  // Group by client name
+  const by={};
+  sessions.forEach((s,i)=>{
+    const n=(s['Cliente']||s.name||s['Nome e Cognome']||'—').trim();
+    if(!by[n])by[n]=[];
+    by[n].push({...s,_i:i});
+  });
+  const isGs = source==='gs';
+  let out=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+    <div style="font-size:11px;color:var(--mu)">${isGs?'📡 Storico completo (Google Sheets)':'💾 Storico locale'} · ${sessions.length} sessioni · ${Object.keys(by).length} clienti</div>
+    ${!isGs?`<button class="clrbtn" onclick="clearHist()">🗑 Cancella locale</button>`:''}
+  </div>`;
+  Object.entries(by).sort(([a],[b])=>a.localeCompare(b)).forEach(([name,ss])=>{
+    out+=`<div class="hclient">
+      <div class="hname"><span>${name}</span><span style="font-size:11px;color:var(--mu);font-weight:400">${ss.length} sess.</span></div>
+      <div class="htable">
+        <div class="hrow2${isGs?" gs":""} hhead"><span>Data</span><span>Trainer</span><span>Score</span><span>Livello</span></div>`;
+    // Sort by date desc
+    let idx_gs_counter=0;
+    ss.sort((a,b)=>{
+      const da=a['Data Sessione']||a.date||a._saved||'';
+      const db=b['Data Sessione']||b.date||b._saved||'';
+      return da>db?-1:1;
+    }).forEach(s=>{
+      const idx_gs=isGs?(s._gsIdx!==undefined?s._gsIdx:-1):s._i;
+      const dateRaw=s['Data Sessione']||s.date||s._saved||'';
+      let d='—';
+      try{
+        const dt=new Date(dateRaw.includes('/')?dateRaw.split('/').reverse().join('-'):dateRaw);
+        if(!isNaN(dt)) d=dt.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'2-digit'});
+      }catch(e){}
+      // Recalc score with current system if raw data available
+      let scoreRaw=parseInt(s['Score Totale']||s.total||0)||0;
+      if(isGs&&s['Plank sec']&&parseInt(s['Plank sec'])>0){
+        try{
+          const _rd=gsRowToD(s);
+          if(!isNaN(_rd.total)&&_rd.total>0) scoreRaw=_rd.total;
+        }catch(e){}
+      }
+      const lvRaw=parseInt(s['Livello']||s.finalLv||0)||0;
+      // Determine level from score if finalLv not stored
+      const lv=scoreRaw>=76?4:scoreRaw>=64?3:scoreRaw>=50?2:scoreRaw>=33?1:0;
+      const trainer=s['Trainer']||s.trainer||'—';
+      const rowClick=isGs
+        ?`onclick="viewGsReport(${idx_gs})"`
+        :`onclick="viewSessionReport(${s._i})"`;
+      out+=`<div class="hrow2${isGs?" gs":""}" style="cursor:pointer" ${rowClick}>
+        <span style="color:var(--mu)">${d}</span>
+        <span style="color:var(--mu);font-size:12px">${trainer}</span>
+        <span style="font-family:'DM Mono';font-weight:600;color:${LV_COL[lv]}">${scoreRaw||'—'}</span>
+        <span><span class="bs ${LV_CSS[lv]}">${LV_ICON[lv]} ${LV_NAME[lv]}</span></span>
+      </div>`;
+    });
+    out+=`</div></div>`;
+  });
+  cont.innerHTML=out;
+}
+
+async function renderHistory(){
+  const cont=el('hist-content');
+  cont.innerHTML='<div class="hist-empty">⏳ Carico storico da Google Sheets…</div>';
+  try{
+    const j=await Promise.race([
+      jsonpFetch(GS_URL+'?action=all'),
+      new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),6000))
+    ]);
+    if(j&&j.ok&&j.sessions&&j.sessions.length>0){
+      _gsAllSessions=j.sessions.map((s,i)=>({...s,_gsIdx:i}));
+      renderHistoryData(_gsAllSessions,'gs');
+      return;
+    }
+  }catch(e){}
+  // Fallback: local
+  const h=getHist();
+  if(h.length) renderHistoryData(h,'local');
+  else cont.innerHTML='<div class="hist-empty">Nessuna sessione trovata.<br>Genera il primo report o verifica la connessione.</div>';
+}
+
+function viewSessionReport(i){
+  const h=getHist();
+  const s=h[i];
+  if(!s) return;
+  // Rebuild _clientHistory for this client to enable charts
+  const clientSessions=h.filter(x=>(x.name||'')===s.name)
+    .sort((a,b)=>((a.date||a._saved)<(b.date||b._saved)?1:-1));
+  // Temporarily set _clientHistory for chart building
+  const prevHistory=_clientHistory;
+  _clientHistory=clientSessions.map(x=>({
+    "Data Sessione":x.date||'',
+    "N° Sessione":x.session||'',
+    "Score Totale":(function(){try{var r=recalcScore({...x,rowTot:x.rowTot||0,hasPrev:!!(x.pPlank||x.pSquat||x.pPush||x.pRmin),pLean:x.pLean||x.lean||''});return r&&!isNaN(r.total)?r.total:x.total||''}catch(e){return x.total||''}})()||'',
+    "Plank sec":x.plank||'',
+    "Squat reps":x.squat||'',
+    "Push Up reps":x.push||'',
+    "Row min:sec":fmtT(x.rowTot),
+    "Massa Grassa %":x.fat||'',
+  }));
+  const sRecalc=recalcScore({...s,
+    rowTot:s.rowTot||0,
+    hasPrev:!!(s.pPlank||s.pSquat||s.pPush||s.pRmin),
+    pLean:s.pLean||s.lean||''
+  });
+  const reportHtml=buildReport(sRecalc||s);
+  _clientHistory=prevHistory;
+  _currentReportHtml=reportHtml;
+  showReportOverlay(reportHtml);
+}
+
+// ══════ GOOGLE SHEETS — JSONP for reads, no-cors for writes ══════
+function jsonpFetch(url){
+  return new Promise((resolve,reject)=>{
+    const cb='_xs_'+Date.now()+'_'+Math.random().toString(36).slice(2);
+    const timer=setTimeout(()=>{ delete window[cb]; try{s.remove()}catch(e){}; reject(new Error('timeout')); },8000);
+    window[cb]=(data)=>{ clearTimeout(timer); delete window[cb]; try{s.remove()}catch(e){}; resolve(data); };
+    const s=document.createElement('script');
+    s.src=url+(url.includes('?')?'&':'?')+'callback='+cb;
+    s.onerror=()=>{ clearTimeout(timer); delete window[cb]; reject(new Error('script error')); };
+    document.head.appendChild(s);
+  });
+}
+
+function gsPost(data){
+  try{ fetch(GS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(data)}); }
+  catch(e){}
+}
+
+async function testGsConnection(){
+  el('gs-test-result').textContent='⏳ Test in corso...';
+  el('gs-test-result').style.color='#666';
+  try{
+    const j=await jsonpFetch(GS_URL+'?action=names');
+    if(j&&j.ok){
+      el('gs-test-result').textContent='✓ Connessione OK — '+j.names.length+' clienti nel foglio';
+      el('gs-test-result').style.color='#4ade80';
+    }else{
+      el('gs-test-result').textContent='⚠ Risposta inattesa dallo script';
+      el('gs-test-result').style.color='#f59e0b';
+    }
+  }catch(e){
+    el('gs-test-result').textContent='✗ Connessione fallita — apri il tool da Safari o da Netlify';
+    el('gs-test-result').style.color='#f87171';
+  }
+}
+
+async function loadClientNames(){
+  try{
+    const j=await jsonpFetch(GS_URL+'?action=names');
+    if(j&&j.ok&&j.names) _clientNames=j.names;
+  }catch(e){
+    // fallback: use local history names
+    const h=getHist();
+    _clientNames=[...new Set(h.map(s=>s.name).filter(Boolean))].sort();
+  }
+}
+
+let _nameTimer2=null;
+function onNameInput(){
+  calc();
+  const val=vs('f-name');
+  // dropdown from names (GSheets + local)
+  const localNames=[...new Set(getHist().map(s=>s.name).filter(Boolean))];
+  const allNames=[...new Set([..._clientNames,...localNames])].sort();
+  if(val.length>=2){
+    const m=allNames.filter(n=>n.toLowerCase().includes(val.toLowerCase()));
+    if(m.length){
+      el('name-dd').innerHTML=m.slice(0,6).map(n=>`<div class="dd-item" onmousedown="event.preventDefault();selectClient('${n.replace(/'/g,"\\'")}'')">${n}</div>`).join('');
+      el('name-dd').style.display='block';
+    }else el('name-dd').style.display='none';
+  }else el('name-dd').style.display='none';
+
+  clearTimeout(_nameTimer2);
+  if(val.length>=3) _nameTimer2=setTimeout(()=>loadClientHistory(val),700);
+}
+
+function selectClient(name){
+  el('f-name').value=name;
+  el('name-dd').style.display='none';
+  loadClientHistory(name);
+}
+
+async function loadClientHistory(name){
+  if(!name||name===_loadedClient)return;
+  el('client-st').textContent='⏳ Carico storico…';
+  el('client-st').style.color='#666';
+
+  // First try local history
+  const local=getHist().filter(s=>(s.name||'').toLowerCase()===name.toLowerCase())
+    .sort((a,b)=>(a._saved||a.date||'')>(b._saved||b.date||'')?1:-1);
+
+  // Try GSheets via JSONP
+  try{
+    const j=await jsonpFetch(GS_URL+'?action=history&client='+encodeURIComponent(name.toLowerCase()));
+    if(j&&j.ok&&j.sessions&&j.sessions.length>0){
+      _loadedClient=name;
+      const gsSorted=j.sessions.slice().sort((a,b)=>parseInt(a['N° Sessione']||0)-parseInt(b['N° Sessione']||0));_clientHistory=gsSorted;autoFillPrevious(gsSorted[gsSorted.length-1]);
+      (function(){var loc=getHist().filter(function(s){return(s.name||'').toLowerCase()===name.toLowerCase();}).sort(function(a,b){return(a._saved||'')>(b._saved||'')?-1:1;});var lf=loc.length?loc[0]:null;if(lf&&lf.dob&&!el('f-dob').value){el('f-dob').value=lf.dob;calcAge();}if(lf&&lf.height&&!el('f-height').value){el('f-height').value=lf.height;}})();
+      el('client-st').textContent=`✓ ${j.sessions.length} sessioni (Google Sheets)`;
+      el('client-st').style.color='#4ade80';
+      return;
+    }
+  }catch(e){}
+
+  // Fallback: local
+  if(local.length>0){
+    _clientHistory=local.map(s=>({
+      "Data Sessione":s.date||'',
+      "N° Sessione":s.session||'',
+      "Score Totale":s.total||'',
+      "Plank sec":s.plank||'',
+      "Squat reps":s.squat||'',
+      "Push Up reps":s.push||'',
+      "Row min:sec":fmtT(s.rowTot),
+      "Row Attrezzo":s.rowVariant==='ski'?'SkiErg':'RowErg',
+      "Massa Grassa %":s.fat||'',
+      "Massa Magra %":s.lean||'',
+      "Peso kg":s.peso||'',
+      "Vita cm":s.vita||'','Seno cm':s.seno||'','Fianchi cm':s.fianchi||'',
+      "Girocoscia cm":s.coscia||'','Coscia Media cm':s.coscia2||'','Braccio cm':s.braccio||'',
+      "Trainer":s.trainer||'',
+      "Genere":s.gender||'',
+      "Altezza":s.height||'',
+      "Data di Nascita":s.dob||'',
+      "_saved":s._saved||'',
+      "Squat Variante":s.sqVariant==='sup'?'Supportato':s.sqVariant==='z5'?'+5 kg':s.sqVariant==='z10'?'+10 kg':'Standard',
+      "Push Variante":s.puVariant==='mod'?'Modified':s.puVariant==='elev'?'Piedi elevati':s.puVariant==='pike'?'Pike':'Completo',
+    }));
+    _loadedClient=name;
+    autoFillPrevious(local[local.length-1]);
+    el('client-st').textContent=`✓ ${local.length} sessioni (storico locale)`;
+    el('client-st').style.color='#4ade80';
+  }else{
+    _clientHistory=[]; _loadedClient=name;
+    el('client-st').textContent='Nuovo cliente';
+    el('client-st').style.color='#666';
+  }
+}
+
+function autoFillPrevious(last){
+  if(!last) return;
+  // last can be raw session object (from local) or GSheets row object
+  const isLocal = last.fat !== undefined; // local session
+  if(isLocal){
+    if(last.fat){el('cb-bia').checked=true;el('pb-bia').classList.add('open');el('p-fat').value=last.fat||'';el('p-lean').value=last.lean||'';el('p-peso').value=last.peso||''}
+    if(last.plank){el('cb-plank').checked=true;el('pb-plank').classList.add('open');el('p-plank').value=last.plank||''}
+    if(last.squat){el('cb-squat').checked=true;el('pb-squat').classList.add('open');el('p-squat').value=last.squat||'';el('p-sq-var').value=last.sqVariant||'std'}
+    if(last.push){el('cb-push').checked=true;el('pb-push').classList.add('open');el('p-push').value=last.push||'';el('p-pu-var').value=last.puVariant||'std'}
+    if(last.rowTot){const m=Math.floor(last.rowTot/60),s=Math.round(last.rowTot%60);el('cb-row').checked=true;el('pb-row').classList.add('open');el('p-rmin').value=m;el('p-rsec').value=s;el('p-row-var').value=last.rowVariant||'rw'}
+    if(last.vita){el('cb-circ').checked=true;el('pb-circ').classList.add('open');el('p-vita').value=last.vita||'';el('p-seno').value=last.seno||'';el('p-fianchi').value=last.fianchi||'';el('p-coscia').value=last.coscia||'';el('p-coscia2').value=last.coscia2||'';el('p-braccio').value=last.braccio||''}
+    if(last.session) el('f-session').value=parseInt(last.session)+1;
+    const _rnd=new Date();_rnd.setDate(_rnd.getDate()+28);el('f-next-date').value=_rnd.toISOString().slice(0,10);
+    if(last.dob){el('f-dob').value=last.dob;calcAge()}
+    if(last.height){el('f-height').value=last.height}
+    if(last.gender){el('f-gender').value=last.gender}
+    if(last.trainer&&!vs('f-trainer')){const sel=el('f-trainer');for(let i=0;i<sel.options.length;i++){if(sel.options[i].text===last.trainer){sel.selectedIndex=i;break}}}
+  }else{
+    // GSheets format
+    if(last["Massa Grassa %"]){el('cb-bia').checked=true;el('pb-bia').classList.add('open');el('p-fat').value=last["Massa Grassa %"]||'';el('p-lean').value=last["Massa Magra %"]||'';el('p-peso').value=last["Peso kg"]||''}
+    if(last["Plank sec"]){el('cb-plank').checked=true;el('pb-plank').classList.add('open');el('p-plank').value=last["Plank sec"]||''}
+    if(last["Squat reps"]){el('cb-squat').checked=true;el('pb-squat').classList.add('open');el('p-squat').value=last["Squat reps"]||'';const sv=last["Squat Variante"];el('p-sq-var').value=sv==='Supportato'?'sup':sv==='+5 kg'?'z5':sv==='+10 kg'?'z10':'std'}
+    if(last["Push Up reps"]){el('cb-push').checked=true;el('pb-push').classList.add('open');el('p-push').value=last["Push Up reps"]||'';const pv=last["Push Variante"];el('p-pu-var').value=pv==='Modified'?'mod':pv==='Piedi elevati'?'elev':pv==='Pike'?'pike':'std'}
+    if(last["Row min:sec"]){const p=String(last["Row min:sec"]).split(':');if(p.length===2){el('cb-row').checked=true;el('pb-row').classList.add('open');el('p-rmin').value=p[0]||'';el('p-rsec').value=p[1]||'';el('p-row-var').value=last["Row Attrezzo"]==='SkiErg'?'ski':'rw'}}
+    if(last["Vita cm"]){el('cb-circ').checked=true;el('pb-circ').classList.add('open');el('p-vita').value=last["Vita cm"]||'';el('p-seno').value=last["Seno cm"]||'';el('p-fianchi').value=last["Fianchi cm"]||'';el('p-coscia').value=last["Girocoscia cm"]||'';el('p-coscia2').value=last["Coscia Media cm"]||'';el('p-braccio').value=last["Braccio cm"]||''}
+    if(last["N° Sessione"]) el('f-session').value=parseInt(last["N° Sessione"])+1;
+    if(last["Data di Nascita"]){el('f-dob').value=last["Data di Nascita"];calcAge()}
+    if(last["Altezza"]){el('f-height').value=last["Altezza"]}
+    if(last["gender"]||last["Genere"]){el('f-gender').value=last["gender"]||last["Genere"]}
+    if(last["Trainer"]&&!vs('f-trainer')){const sel=el('f-trainer');for(let i=0;i<sel.options.length;i++){if(sel.options[i].text===last["Trainer"]){sel.selectedIndex=i;break}}}
+  }
+  calc();
+}
+
+// ══════ GENERATE ══════
+async function doGenerate(){
+  calc();
+  if(!validate()) return;
+  addSession(_D);
+  gsPost(_D);
+  // Pre-fetch all scores for percentile ranking (non-blocking — fallback to local)
+  try{
+    const j=await Promise.race([
+      jsonpFetch(GS_URL+'?action=allscores'),
+      new Promise((_,rej)=>setTimeout(()=>rej(),3000))
+    ]);
+    if(j&&j.ok&&j.scores) _allScores=j.scores.map(s=>parseInt(s)||0).filter(v=>v>0);
+  }catch(e){
+    // Fallback: use localStorage scores
+    try{
+      const hist=JSON.parse(localStorage.getItem('xstamina_hist')||'[]');
+      const best={};
+      hist.forEach(s=>{const n=(s.name||'').toLowerCase();const sc=parseInt(s.total||0);if(n&&sc>0&&(!best[n]||sc>best[n]))best[n]=sc;});
+      _allScores=Object.values(best).filter(v=>v>0);
+    }catch(e2){}
+  }
+  _currentReportHtml = buildReport(_D);
+  showReportOverlay(_currentReportHtml);
+}
+
+// ══════ REPORT OVERLAY ══════
+function showReportOverlay(reportHtml){
+  const frame=el('report-frame');
+  // Write into iframe — fully isolated, no CSS bleed
+  frame.srcdoc=reportHtml;
+  el('report-overlay').classList.add('show');
+  document.body.style.overflow='hidden';
+}
+function addToCalendar(){
+  if(!_D) return;
+  var nm=_D.name||"Cliente";
+  var lv=_D.finalLv!==undefined?["STARTER","ACTIVE","STRONG","ATHLETE","ELITE"][_D.finalLv]:"";
+  var nextLv=_D.finalLv!==undefined&&_D.finalLv<4?["ACTIVE","STRONG","ATHLETE","ELITE"][_D.finalLv]:"ELITE";
+  var tr=_D.trainer||"";
+  var scoreStr=isNaN(_D.total)?"-":String(_D.total);
+  var rowStr=_D.rowTot>0?(Math.floor(_D.rowTot/60)+":"+( (_D.rowTot%60)<10?"0":"")+Math.floor(_D.rowTot%60))+"s":"-";
+
+  // ── Evento 1: sessione oggi (con orario) ─────────────────────────────
+  var sd=(_D.date||new Date().toISOString().slice(0,10)).replace(/-/g,"");
+  var title1=nm+" — Valutazione | Livello: "+lv+" ("+scoreStr+")";
+  var det1="Cliente: "+nm+"\n";
+  det1+="Trainer: "+(tr||"—")+"\n";
+  det1+="Score: "+scoreStr+" / 99 | Livello: "+lv+"\n";
+  det1+="================================\n";
+  det1+=(_D.plank?"Plank Hold: "+_D.plank+"s\n":"");
+  det1+=(_D.squat?"Squat 60s: "+_D.squat+" reps\n":"");
+  det1+=(_D.push?"Push Up 60s: "+_D.push+" reps\n":"");
+  det1+=(_D.rowTot>0?"Row/SkiErg 500m: "+rowStr+"\n":"");
+  det1+=(_D.fat?"Massa Grassa: "+_D.fat+"%\n":"");
+  det1+=(_D.lean?"Massa Magra: "+_D.lean+"%\n":"");
+  det1+=(_D.peso?"Peso: "+_D.peso+"kg\n":"");
+  det1+="================================\n";
+  det1+="Xstamina Training Lab | Via Agri 15, Roma";
+  var url1="https://calendar.google.com/calendar/render?action=TEMPLATE"
+    +"&text="+encodeURIComponent(title1)
+    +"&dates="+sd+"T090000/"+sd+"T100000"
+    +"&details="+encodeURIComponent(det1)
+    +"&location="+encodeURIComponent("Xstamina Training Lab, Via Agri 15, Roma")
+    +"&cid=c5e03340f53510dcc0793325c30bfdc6f1469933de909976f5f34fb94f88fac2%40group.calendar.google.com";
+
+  // ── Evento 2: prossima misurazione (tutto il giorno, +28 giorni) ─────
+  var nd=_D.nextDate;
+  if(!nd||nd<=(_D.date||new Date().toISOString().slice(0,10))){
+    var _base=new Date((_D.date||new Date().toISOString().slice(0,10))+"T12:00:00");
+    _base.setDate(_base.getDate()+28);
+    nd=_base.toISOString().slice(0,10);
+  }
+  var nd2=nd.replace(/-/g,"");
+  // All-day event: dates format is YYYYMMDD/YYYYMMDD (no time component)
+  var nd2next=(function(){var d=new Date(nd+"T12:00:00");d.setDate(d.getDate()+1);return d.toISOString().slice(0,10).replace(/-/g,"");})();
+  var title2=nm+" — Valutazione | Obiettivo: "+nextLv;
+  var det2="Cliente: "+nm+"\n";
+  det2+="Trainer: "+(tr||"—")+"\n";
+  det2+="Ultimo score: "+scoreStr+" / 99 | Livello attuale: "+lv+"\n";
+  det2+="Obiettivo sessione: raggiungere "+nextLv+"\n";
+  det2+=(_D.nextNote?"Note: "+_D.nextNote+"\n":"");
+  det2+="================================\n";
+  det2+=(_D.plank?"Plank Hold: "+_D.plank+"s\n":"");
+  det2+=(_D.squat?"Squat 60s: "+_D.squat+" reps\n":"");
+  det2+=(_D.push?"Push Up 60s: "+_D.push+" reps\n":"");
+  det2+=(_D.rowTot>0?"Row/SkiErg 500m: "+rowStr+"\n":"");
+  det2+=(_D.fat?"Massa Grassa: "+_D.fat+"%\n":"");
+  det2+="================================\n";
+  det2+="Xstamina Training Lab | Via Agri 15, Roma";
+  var url2="https://calendar.google.com/calendar/render?action=TEMPLATE"
+    +"&text="+encodeURIComponent(title2)
+    +"&dates="+nd2+"/"+nd2next
+    +"&details="+encodeURIComponent(det2)
+    +"&location="+encodeURIComponent("Xstamina Training Lab, Via Agri 15, Roma")
+    +"&cid=c5e03340f53510dcc0793325c30bfdc6f1469933de909976f5f34fb94f88fac2%40group.calendar.google.com";
+
+  try{window.open(url1,"_blank")}catch(e){}
+  setTimeout(function(){try{window.open(url2,"_blank")}catch(e){}},800);
+}
+
+
+function viewGsReport(idx){_viewGsReportAsync(parseInt(idx));}
+async function _viewGsReportAsync(idx){
+  const s=_gsAllSessions.find(x=>x._gsIdx===parseInt(idx))||_gsAllSessions[parseInt(idx)];
+  if(!s) return;
+  const d=gsRowToD(s);
+  // Build client history for charts from all gs sessions of same client
+  const clientName=(d.name||'').toLowerCase();
+  const prevHistory=_clientHistory;
+  _clientHistory=_gsAllSessions
+    .filter(r=>(r['Cliente']||r['Nome e Cognome']||r.name||'').toLowerCase()===clientName)
+    .sort((a,b)=>{const da=a['Data Sessione']||'',db=b['Data Sessione']||'';const pa=da.includes('/')?da.split('/').reverse().join('-'):da;const pb=db.includes('/')?db.split('/').reverse().join('-'):db;return pa>pb?1:-1;})
+    .map(r=>{
+      const p=String(r['Row min:sec']||'').split(':');
+      return {
+        'Data Sessione':r['Data Sessione']||'',
+        'N° Sessione':r['N° Sessione']||'',
+        'Score Totale':(function(){try{var rr=recalcScore(gsRowToD(r));return rr&&!isNaN(rr.total)?rr.total:r['Score Totale']||""}catch(e){return r['Score Totale']||""}})(),'_rawScore':r['Score Totale']||'',
+        'Plank sec':r['Plank sec']||'',
+        'Squat reps':r['Squat reps']||'',
+        'Push Up reps':r['Push Up reps']||'',
+        'Row min:sec':r['Row min:sec']||'',
+        'Massa Grassa %':r['Massa Grassa %']||'',
+      };
+    });
+  // Pre-fetch allscores for percentile
+  try{
+    const j=await Promise.race([
+      jsonpFetch(GS_URL+'?action=allscores'),
+      new Promise((_,rej)=>setTimeout(()=>rej(),2000))
+    ]);
+    if(j&&j.ok&&j.scores) _allScores=j.scores.map(x=>parseInt(x)||0).filter(v=>v>0);
+  }catch(e){}
+  const reportHtml=buildReport(d);
+  _clientHistory=prevHistory;
+  _currentReportHtml=reportHtml;
+  showReportOverlay(reportHtml);
+}
+
+function closeReport(){
+  el('report-overlay').classList.remove('show');
+  document.body.style.overflow='';
+  // Clear iframe to avoid stale state
+  setTimeout(()=>{ try{el('report-frame').srcdoc=''}catch(e){} }, 300);
+}
+async function shareReport(){
+  if(!_currentReportHtml) return;
+  const d=_D;
+  const safeName=(d.name||'Cliente').replace(/\s+/g,'_');
+  const fname=`Xstamina_${safeName}_Sess${d.session}_${d.date||new Date().toISOString().slice(0,10)}.html`;
+  const blob=new Blob([_currentReportHtml],{type:'text/html'});
+  const file=new File([blob],fname,{type:'text/html'});
+  if(navigator.canShare&&navigator.canShare({files:[file]})){
+    try{await navigator.share({files:[file],title:`Report ${d.name} — Xstamina`});return}
+    catch(e){if(e.name==='AbortError')return}
+  }
+  if(navigator.share){
+    try{await navigator.share({title:`Report ${d.name} — Xstamina`,url:URL.createObjectURL(blob)});return}
+    catch(e){if(e.name==='AbortError')return}
+  }
+  // Desktop fallback
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=fname;
+  document.body.appendChild(a);a.click();
+  setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url)},300);
+}
+
+// ══════ BUILD REPORT ══════
+const LOGO_DARK="data:image/png;base64,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";
+
+function buildReport(d){
+  function parseDate(s){
+    if(!s) return null;
+    // ISO: 2026-03-12
+    if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return new Date(s+'T12:00:00');
+    // Italian: 12/03/2026
+    if(/^\d{2}\/\d{2}\/\d{4}$/.test(s)){const p=s.split('/');return new Date(p[2]+'-'+p[1]+'-'+p[0]+'T12:00:00');}
+    return null;
+  }
+  const _dt=parseDate(d.date);
+  const dateL=_dt&&!isNaN(_dt)
+    ?_dt.toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'})
+    :new Date().toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'});
+  const bg=LV_BG[d.finalLv],col=LV_COL[d.finalLv],bdr=LV_BDR[d.finalLv];
+  const lvN=LV_NAME[d.finalLv],lvI=LV_ICON[d.finalLv];
+
+  function dlt(cur,prev,inv=false){
+    const c=parseFloat(cur),p=parseFloat(prev);
+    if(isNaN(c)||isNaN(p))return '';
+    const diff=Math.round((c-p)*10)/10;
+    const better=inv?diff<0:diff>0;
+    const clr=diff===0?'#555':better?'#4ade80':'#f87171';
+    return `<span style="font-size:11px;margin-left:5px;color:${clr}">${diff>0?'+':''}${diff}</span>`
+  }
+  function bar(pct){
+    const p=Math.max(2,Math.min(99,isNaN(pct)?0:Math.round(pct)));
+    const c=p>70?'#e8320a':p>45?'#f59e0b':p>20?'#999':'#bbb';
+    return `<div style="background:#e8e5e0;border-radius:4px;height:8px;overflow:hidden;flex:1"><div style="background:${c};height:100%;width:${p}%;border-radius:4px"></div></div>`
+  }
+
+  const sqLabel={std:'Standard',sup:'Supportato (panca)',z5:'+5 kg',z10:'+10 kg'}[d.sqVariant]||'Standard';
+  const puLabel={std:'Completo',mod:'Modified (ginocchia)',elev:'Piedi elevati',pike:'Pike'}[d.puVariant]||'Completo';
+  const sqL=`${fn(d.squat)} reps <small style="color:#555">(${sqLabel})</small>`;
+  const puL=`${fn(d.push)} reps <small style="color:#555">(${puLabel})</small>`;
+  const rwL=`${fmtT(d.rowTot)} <small style="color:#555">(${d.rowVariant==='ski'?'SkiErg':'RowErg'})</small>`;
+  const pRwTot=(parseFloat(d.pRmin)||0)*60+(parseFloat(d.pRsec)||0);
+
+  const plLv=d.plank>0?getLevel(d.plank*d.mult,'plank',d.gender):0;
+  const sqLv=d.squat>0?getLevel(d.squat*d.sqC*d.mult,'squat',d.gender):0;
+  const puLv=d.push>0? getLevel(d.push*d.puC*d.mult,'push',d.gender):0;
+  const rwLv=d.rowAdj>0?getLevel(d.rowAdj/d.mult,'row',d.gender):0;
+
+  function trow(name,cur,prev,lv,sc){
+    return `<tr><td style="padding:10px 14px;font-weight:500;font-size:13px">${name}</td>
+    <td style="padding:10px 14px;font-size:13px">${cur}</td>
+    <td style="padding:10px 14px;color:#444;font-size:12px">${prev||'—'}</td>
+    <td style="padding:10px 14px;font-size:14px">${LV_ICON[lv]}</td>
+    <td style="padding:10px 14px"><div style="display:flex;align-items:center;gap:8px">${bar(sc)}<span style="font-family:monospace;font-size:11px;min-width:22px;text-align:right;color:#555">${fmtN(sc)}</span></div></td></tr>`
+  }
+  function srow(lbl,w,sc){
+    return `<tr><td style="padding:8px 14px;color:#555;font-size:11px;text-transform:uppercase">${lbl} <span style="color:#333">${w}</span></td>
+    <td style="padding:8px 14px"><div style="display:flex;align-items:center;gap:8px">${bar(sc)}<span style="font-family:monospace;font-size:12px;min-width:24px;text-align:right;color:#777">${fmtN(sc)}</span></div></td></tr>`
+  }
+  function crow(lbl,cur,prev,inv=false){
+    if(!cur||cur==='')return '';
+    return `<tr><td style="padding:8px 14px;color:#555;font-size:11px;text-transform:uppercase">${lbl}</td>
+    <td style="padding:8px 14px;font-weight:500">${fn(cur)} cm${dlt(cur,prev,inv)}</td>
+    <td style="padding:8px 14px;color:#444">${prev&&prev!==''?fn(prev)+' cm':'—'}</td></tr>`
+  }
+
+  const hasCirc=d.vita||d.seno||d.fianchi||d.coscia||d.coscia2||d.braccio;
+  const nextLv=d.finalLv<4
+    ?`<p style="font-size:12px;color:#555;margin-top:8px">Prossimo livello: <strong style="color:#777">${LV_NAME[d.finalLv+1]}</strong></p>`
+    :`<p style="font-size:12px;color:#f87171;margin-top:8px">Livello massimo raggiunto. Eccezionale.</p>`;
+
+  // Raw score (mult=1.0) — for cross-client comparison only
+  function calcRawScore(d){
+    const g=d.gender||'M';
+    const sqC=SQ_COEFF[d.sqVariant]||1, puC=PU_COEFF[d.puVariant]||1, rowC=ROW_COEFF[d.rowVariant]||1;
+    const sPl=normScore(parseFloat(d.plank)||0,'plank',1.0,1.0,g);
+    const sSq=normScore(parseFloat(d.squat)||0,'squat',1.0,sqC,g);
+    const sPu=normScore(parseFloat(d.push)||0,'push',1.0,puC,g);
+    const rowAdj=(parseFloat(d.rowTot)||0)*rowC;
+    const sRw=rowAdj>0?normScore(rowAdj,'row',1.0,1.0,g):NaN;
+    const fat=parseFloat(d.fat)||NaN, prevFat=parseFloat(d.prevFat)||NaN;
+    const lean=parseFloat(d.lean)||NaN, prevLean=parseFloat(d.pLean||d.prevLean)||NaN;
+    let sBia=NaN,sLn=NaN;
+    if(!isNaN(fat)) sBia=(d.hasPrev&&!isNaN(prevFat)&&prevFat>0)?Math.min(99,Math.max(0,50+(prevFat-fat)*8)):50;
+    if(!isNaN(lean)) sLn=(d.hasPrev&&!isNaN(prevLean)&&prevLean>0)?Math.min(99,Math.max(0,50+(lean-prevLean)*8)):50;
+    const fatPct=(d.hasPrev&&!isNaN(sBia)&&sBia!==50)?0.10:0;
+    const lnPct=(d.hasPrev&&!isNaN(sLn)&&sLn!==50)?0.10:0;
+    const ph=1-fatPct-lnPct;
+    const items=[[sBia,fatPct],[sLn,lnPct],[sPl,ph*0.25],[sSq,ph*0.25],[sPu,ph*0.25],[sRw,ph*0.25]];
+    let tw=0,ts=0;
+    items.forEach(([s,w])=>{if(!isNaN(s)&&w>0){ts+=s*w;tw+=w;}});
+    return tw>0?Math.round(ts/tw):NaN;
+  }
+  const rawScore=calcRawScore(d);
+  const rawScoreHtml=(!isNaN(rawScore))
+    ?`<div style="font-size:11px;color:#999;margin-top:3px">Score assoluto: <strong style="color:#777">${rawScore}</strong> <span style="color:#bbb">(senza compenso età)</span></div>`
+    :'';
+
+  // ── IMPROVEMENT BOX (dalla 2ª sessione) ──────────────────────────────
+  function buildImprovementBox(d){
+    if(!d.hasPrev) return ''; // prima sessione, niente confronto
+    const tests=[];
+    // Plank
+    if(d.plank>0&&parseFloat(d.pPlank)>0){
+      const prev=parseFloat(d.pPlank),cur=parseFloat(d.plank);
+      const pct=Math.round((cur-prev)/prev*100);
+      tests.push({name:'Plank',pct,unit:'s',cur:cur,prev:prev});
+    }
+    // Squat
+    if(d.squat>0&&parseFloat(d.pSquat)>0){
+      const prev=parseFloat(d.pSquat),cur=parseFloat(d.squat);
+      const pct=Math.round((cur-prev)/prev*100);
+      tests.push({name:'Squat',pct,unit:'reps',cur:cur,prev:prev});
+    }
+    // Push Up
+    if(d.push>0&&parseFloat(d.pPush)>0){
+      const prev=parseFloat(d.pPush),cur=parseFloat(d.push);
+      const pct=Math.round((cur-prev)/prev*100);
+      tests.push({name:'Push Up',pct,unit:'reps',cur:cur,prev:prev});
+    }
+    // Row (tempo — inversione: meno è meglio)
+    const pRwTot2=(parseFloat(d.pRmin)||0)*60+(parseFloat(d.pRsec)||0);
+    if(d.rowTot>0&&pRwTot2>0){
+      const pct=Math.round((pRwTot2-d.rowTot)/pRwTot2*100); // positivo se più veloce
+      tests.push({name:'Row',pct,unit:'',cur:d.rowTot,prev:pRwTot2,isTime:true});
+    }
+    if(tests.length===0) return '';
+    const improved=tests.filter(t=>t.pct>0);
+    const avgImprovement=improved.length>0
+      ?Math.round(improved.reduce((s,t)=>s+t.pct,0)/improved.length)
+      :0;
+    const rows=tests.map(t=>{
+      const col=t.pct>0?'#22c55e':t.pct<0?'#f87171':'#999';
+      const arrow=t.pct>0?'↑':t.pct<0?'↓':'→';
+      const sign=t.pct>0?'+':'';
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0eeeb">
+        <span style="font-size:13px;color:#555">${t.name}</span>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:12px;color:#aaa">${t.isTime?fmtT(t.prev):t.prev+' '+t.unit} → ${t.isTime?fmtT(t.cur):t.cur+' '+t.unit}</span>
+          <span style="font-family:'DM Mono';font-size:14px;font-weight:600;color:${col};min-width:48px;text-align:right">${arrow} ${sign}${t.pct}%</span>
+        </div>
+      </div>`;
+    }).join('');
+    const headerColor=avgImprovement>0?'#22c55e':avgImprovement<0?'#f87171':'#999';
+    const headerMsg=avgImprovement>0
+      ?`Media miglioramento: <strong style="color:#22c55e">+${avgImprovement}%</strong>`
+      :avgImprovement<0
+      ?`Media variazione: <strong style="color:#f87171">${avgImprovement}%</strong>`
+      :'Performance stabile rispetto alla sessione precedente.';
+    return `<div class="st">Variazione rispetto alla sessione precedente</div>
+    <div class="card" style="margin-bottom:12px">
+      <div style="padding:14px 16px;background:#f9f8f6;border-bottom:1px solid #e8e5e0;font-size:13px;color:#444">${headerMsg}</div>
+      <div style="padding:4px 16px 4px">${rows}</div>
+    </div>`;
+  }
+  const improvementBox=buildImprovementBox(d);
+
+  // ── SCORE PREDICTION (sync) ────────────────────────────────────────────
+  function buildPrediction(history, curScore, curLv){
+    if(curLv>=4) return '';
+    const nextThr=[33,50,64,76][curLv];
+    const nextNm=['ACTIVE','STRONG','ATHLETE','ELITE'][curLv];
+    const ptsLeft=Math.max(0,nextThr-curScore);
+    // Time projection — only if we have 2+ sessions with improving score
+    let projLine='';
+    const sorted=(history||[]).slice().sort((a,b)=>{
+      const da=a['Data Sessione']||a.date||'',db=b['Data Sessione']||b.date||'';
+      return da>db?1:-1;
+    });
+    const scores=sorted.map(s=>parseInt(s['Score Totale']||s.total||0)).filter(v=>v>0);
+    if(scores.length>=2){
+      const rawAvg=(scores[scores.length-1]-scores[0])/(scores.length-1);
+      if(rawAvg>0&&ptsLeft>0){
+        const slow=[1.0,0.88,0.75,0.62][curLv];
+        const projGain=Math.max(0.8,rawAvg*slow);
+        const weeks=Math.ceil(ptsLeft/projGain)*9;
+        const dt=new Date();dt.setDate(dt.getDate()+weeks*7);
+        const dtStr=dt.toLocaleDateString('it-IT',{month:'long',year:'numeric'});
+        projLine=`Progressione media: <strong style="color:#fff">+${rawAvg.toFixed(1)} pt</strong> per ciclo.<br>Se continui così: <strong style="color:#4ade80">~${weeks} settimane</strong> — entro <strong style="color:#fff">${dtStr}</strong>. 💪`;
+      } else if(rawAvg<=0){
+        projLine='<span style="color:#f87171">Score in calo rispetto alla sessione precedente. Analizza i test singoli.</span>';
+      }
+    }
+    const ptsHtml=ptsLeft>0
+      ?`Mancano <strong style="color:#e8320a">${ptsLeft} punti</strong> per raggiungere <strong style="color:#fff">${nextNm}</strong>.`
+      :'<strong style="color:#4ade80">Livello raggiunto! 🎉</strong>';
+    return `<div style="background:#1a1a1a;border-left:3px solid #e8320a;border-radius:0 8px 8px 0;padding:14px 16px;margin-bottom:16px">
+      <div style="font-family:'Bebas Neue';font-size:11px;letter-spacing:3px;color:#e8320a;margin-bottom:8px">📈 Obiettivo Prossimo Livello</div>
+      <div style="font-size:13px;color:#ccc;line-height:1.8">
+        ${ptsHtml}${projLine?'<br>'+projLine:''}
+      </div>
+    </div>`;
+  }
+
+  // ── RANKING PERCENTILE (sync — uses pre-fetched _allScores) ────────────
+  function buildRanking(curScore, curGender){
+    // Filter _allScores by gender (F/M) — objects from GSheets have {score,gender}
+    const gLabel = curGender==='F' ? 'Donna' : 'Uomo';
+    let scores=[];
+    if(_allScores.length>=3){
+      const gScores=_allScores.filter(s=>typeof s==='object'&&s.gender===gLabel).map(s=>s.score);
+      scores = gScores.length>=3 ? gScores : _allScores.map(s=>typeof s==='object'?s.score:s).filter(v=>v>0);
+    }
+    if(scores.length<3){
+      try{
+        const h=JSON.parse(localStorage.getItem('xstamina_hist')||'[]');
+        const b={};
+        h.forEach(s=>{
+          const n=(s.name||'').toLowerCase();const sc=parseInt(s.total||0);
+          const g=s.gender||'';
+          if(n&&sc>0&&g===curGender&&(!b[n]||sc>b[n]))b[n]=sc;
+        });
+        scores=Object.values(b).filter(v=>v>0);
+      }catch(e){}
+    }
+    if(scores.length<3) return '';
+    const below=scores.filter(s=>s<curScore).length;
+    const pct=Math.round((below/scores.length)*100);
+    const tot=scores.length;
+    const gStr = curGender==='F' ? 'clienti donne' : 'clienti uomini';
+    let msg='',col='#aaa';
+    if(pct>=90){msg='Tra i migliori performer dello studio.';col='#fbbf24';}
+    else if(pct>=70){msg='Sopra la media '+gStr+'.';col='#4ade80';}
+    else if(pct>=50){msg='In linea con i '+gStr+' più attivi.';col='#60a5fa';}
+    else{msg='Grande margine di crescita davanti a te.';col='#e8320a';}
+    return `<div style="background:#111;border:1px solid #2a2a2a;border-radius:8px;padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;gap:16px">
+      <div style="text-align:center;flex-shrink:0">
+        <div style="font-family:'Bebas Neue';font-size:38px;color:${col};line-height:1">${pct}°</div>
+        <div style="font-size:9px;letter-spacing:2px;color:#555;text-transform:uppercase">percentile</div>
+      </div>
+      <div>
+        <div style="font-size:13px;color:#fff;margin-bottom:4px">Superi il <strong style="color:${col}">${pct}%</strong> dei ${gStr} dello studio.</div>
+        <div style="font-size:11px;color:#777">${msg}</div>
+        <div style="font-size:10px;color:#333;margin-top:5px">Dato privato · su ${tot} ${gStr}</div>
+      </div>
+    </div>`;
+  }
+
+  // Include current session in prediction so 1-session clients see it too
+  const _histWithCurrent=[..._clientHistory,{"Score Totale":d.total,"Data Sessione":d.date||new Date().toISOString().slice(0,10)}];
+  const prediction=buildPrediction(_histWithCurrent,d.total,d.finalLv);
+  const ranking='';
+  const charts=buildCharts(_clientHistory);
+
+  return `<!DOCTYPE html>
+<html lang="it"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Report ${d.name} — Xstamina</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#f5f4f2;color:#1a1a1a;font-family:"DM Sans",sans-serif;font-size:14px;line-height:1.6}
+.w{max-width:600px;margin:0 auto;padding:24px 16px 80px}
+.logo{text-align:center;padding:16px 0 24px}.logo img{height:60px}
+.hero{background:#ffffff;border:1px solid #e0ddd9;border-top:4px solid ${col};border-radius:12px;padding:26px 20px;text-align:center;margin-bottom:20px;box-shadow:0 2px 12px rgba(0,0,0,.06)}
+.hero-lv{font-family:"Bebas Neue";font-size:46px;letter-spacing:4px;color:${col};line-height:1}
+.hero-sc{font-family:"Bebas Neue";font-size:80px;color:${col};line-height:1;margin:6px 0 4px}
+.st{font-family:"Bebas Neue";font-size:11px;letter-spacing:3px;color:#e8320a;text-transform:uppercase;padding-bottom:6px;border-bottom:2px solid #e8320a;margin:18px 0 12px}
+.card{background:#ffffff;border:1px solid #e0ddd9;border-radius:10px;overflow:hidden;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+table{width:100%;border-collapse:collapse}
+th{background:#f5f4f2;color:#999;font-size:9px;letter-spacing:1px;text-transform:uppercase;padding:7px 14px;text-align:left;border-bottom:1px solid #e8e5e0}
+td{border-bottom:1px solid #f0eeeb;vertical-align:middle;color:#1a1a1a}tr:last-child td{border:none}
+.nc{background:#fff4f1;border:1px solid rgba(232,50,10,.2);border-left:3px solid #e8320a;border-radius:10px;padding:14px 16px;font-size:13px;color:#444;line-height:1.75}
+.ft{text-align:center;padding:32px 0 18px;color:#bbb;font-size:11px}
+.ft img{height:40px;display:block;margin:0 auto 10px}
+</style></head><body>
+<div class="w">
+  <div class="logo"><img src="${LOGO_DARK}" alt="Xstamina Training Lab"></div>
+  <div class="hero">
+    <div style="font-size:28px;margin-bottom:6px">${lvI}</div>
+    <div class="hero-lv">${lvN}</div>
+    <div style="height:10px"></div>
+    <div style="font-size:19px;font-weight:600;margin-bottom:2px">${d.name}</div>
+    <div style="font-size:12px;color:#888;margin-bottom:3px">${d.gender==='F'?'Donna':'Uomo'} · ${d.age} anni · Trainer: ${d.trainer||'—'}</div>
+    <div style="font-size:11px;color:#aaa;margin-bottom:18px">${dateL} · Sessione #${d.session}</div>
+    <div class="hero-sc">${isNaN(d.total)?'—':d.total}</div>
+    <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#999;margin-top:4px">Xstamina Score / 99</div>
+    ${rawScoreHtml}
+  </div>
+
+  ${prediction}${ranking}${charts?`<div class="st">Progressione nel Tempo · ${_clientHistory.length} sessioni</div><div class="card" style="padding:16px 16px 6px">${charts}</div>`:''}
+
+  <div class="st">Dettaglio Score</div>
+  <div class="card"><table>
+    ${srow('BIA — delta % massa grassa ★','10%',d.sBia)}${d.sLean?srow('BIA — delta % massa magra ★','10%',d.sLean):''}
+    ${srow('Plank Hold','20%',d.sPl)}
+    ${srow('Squat 60 sec','20%',d.sSq)}
+    ${srow('Push Up 60 sec','20%',d.sPu)}
+    ${srow('Row / SkiErg 500m','20%',d.sRow)}
+    <tr><td style="padding:10px 14px;font-weight:600;font-size:13px;border-top:1px solid #222">TOTALE</td>
+    <td style="padding:10px 14px;font-family:'Bebas Neue';font-size:24px;color:${col};border-top:1px solid #222">${isNaN(d.total)?'—':d.total} / 99</td></tr>
+  </table></div>
+
+  <div class="st">Test Fisici</div>
+  <div class="card"><table>
+    <thead><tr><th>Test</th><th>Sessione</th><th>Precedente</th><th>Lv</th><th>Score</th></tr></thead>
+    <tbody>
+      ${trow('Plank Hold',d.plank?fn(d.plank)+'s':'—',d.pPlank?fn(d.pPlank)+'s':'',plLv,d.sPl)}
+      ${trow('Squat 60 sec',sqL,d.pSquat?fn(d.pSquat)+' reps':'',sqLv,d.sSq)}
+      ${trow('Push Up 60 sec',puL,d.pPush?fn(d.pPush)+' reps':'',puLv,d.sPu)}
+      ${trow('Row / SkiErg 500m',rwL,pRwTot>0?fmtT(pRwTot):'',rwLv,d.sRow)}
+    </tbody>
+  </table></div>
+
+  ${improvementBox}
+  <div class="st">Composizione Corporea — BIA</div>
+  <div class="card"><table>
+    <thead><tr><th>Parametro</th><th>Sessione</th><th>Precedente</th></tr></thead>
+    <tbody>
+      <tr><td style="padding:8px 14px;color:#555;font-size:11px;text-transform:uppercase">Massa grassa % ★ <span style='color:#888;font-size:10px'>(punteggio 10%)</span></td>
+      <td style="padding:8px 14px;font-weight:500">${fn(d.fat)} %${dlt(d.fat,d.hasPrev?d.prevFat:'',true)}</td>
+      <td style="padding:8px 14px;color:#444">${d.hasPrev&&d.prevFat?fn(d.prevFat)+' %':'—'}</td></tr>
+      <tr><td style="padding:8px 14px;color:#555;font-size:11px;text-transform:uppercase">Massa magra % ★ <span style='color:#888;font-size:10px'>(punteggio 10%)</span></td>
+      <td style="padding:8px 14px;font-weight:500">${fn(d.lean)} %</td><td style="padding:8px 14px;color:#444">—</td></tr>
+      <tr><td style="padding:8px 14px;color:#555;font-size:11px;text-transform:uppercase">Peso</td>
+      <td style="padding:8px 14px;font-weight:500">${d.peso?fn(d.peso)+' kg':'—'}</td>
+      <td style="padding:8px 14px;color:#444">${d.hasPrev&&d.pPeso?fn(d.pPeso)+' kg':'—'}</td></tr>
+      ${d.visceral?`<tr><td style="padding:8px 14px;color:#555;font-size:11px;text-transform:uppercase">Grasso viscerale</td><td style="padding:8px 14px;font-weight:500">${fn(d.visceral)}</td><td style="color:#444;padding:8px 14px">—</td></tr>`:''}
+      ${d.bmr?`<tr><td style="padding:8px 14px;color:#555;font-size:11px;text-transform:uppercase">Met. Basale</td><td style="padding:8px 14px;font-weight:500">${fn(d.bmr)} kcal</td><td style="color:#444;padding:8px 14px">—</td></tr>`:''}
+    </tbody>
+  </table></div>
+
+  ${hasCirc?`<div class="st">Circonferenze</div><div class="card"><table>
+    <thead><tr><th>Misura</th><th>Sessione</th><th>Precedente</th></tr></thead>
+    <tbody>
+      ${crow('Vita',d.vita,d.hasPrevCirc?d.pVita:'',true)}
+      ${crow('Seno / Torace',d.seno,d.hasPrevCirc?d.pSeno:'',true)}
+      ${crow('Fianchi',d.fianchi,d.hasPrevCirc?d.pFianchi:'',true)}
+      ${crow('Girocoscia',d.coscia,d.hasPrevCirc?d.pCoscia:'',true)}
+      ${crow('Coscia media',d.coscia2,d.hasPrevCirc?d.pCoscia2:'',true)}
+      ${crow('Braccio',d.braccio,d.hasPrevCirc?d.pBraccio:'',true)}
+    </tbody>
+  </table></div>`:''}
+
+  ${d.note?`<div class="st">Note del Trainer</div><div class="nc">${d.note.replace(/\n/g,'<br>')}</div>`:''}
+
+  ${nextLv}
+  <div class="ft"><img src="${LOGO_DARK}">Xstamina Training Lab · Roma, Trieste-Coppedè<br>${new Date().toLocaleDateString('it-IT')} · Documento personale</div>
+</div></body></html>`
+}
+
+// ══════ CHARTS ══════
+function buildCharts(history){
+  if(!history||history.length<2) return '';
+  const get=(s,k)=>{
+    const raw=s[k]||s[k.replace(/ /g,'_')]||'';
+    return parseFloat(raw)||0;
+  };
+  const labels=history.map(s=>{
+    const raw=s["Data Sessione"]||s.date||'';
+    if(!raw) return '#'+(s["N° Sessione"]||s.session||'?');
+    let dt;
+    if(/^\d{4}-\d{2}-\d{2}$/.test(raw)) dt=new Date(raw+'T12:00:00');
+    else if(/^\d{2}\/\d{2}\/\d{4}$/.test(raw)){const p=raw.split('/');dt=new Date(p[2]+'-'+p[1]+'-'+p[0]+'T12:00:00');}
+    else dt=new Date(raw);
+    return dt&&!isNaN(dt)?dt.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'}):'#'+(s["N° Sessione"]||s.session||'?');
+  });
+  const scores=history.map(s=>parseInt(s["Score Totale"]||s.total)||0);
+  const planks=history.map(s=>parseInt(s["Plank sec"]||s.plank)||0);
+  const squats=history.map(s=>parseInt(s["Squat reps"]||s.squat)||0);
+  const pushes=history.map(s=>parseInt(s["Push Up reps"]||s.push)||0);
+  const rows=history.map(s=>{
+    const t=String(s["Row min:sec"]||'');
+    const p=t.split(':');
+    if(p.length===2&&p[0]!=='') return parseInt(p[0])*60+parseInt(p[1]);
+    return parseInt(s.rowTot)||0;
+  });
+
+  const W=520,H=110,PL=30,PR=8,n=labels.length;
+  const xStep=(W-PL-PR)/Math.max(n-1,1);
+
+  function chart(title,vals,col,maxV,inv,unit){
+    if(vals.filter(v=>v>0).length<2)return '';
+    const valid=vals.filter(v=>v>0);
+    const last=valid[valid.length-1],first=valid[0];
+    const diff=last-first;
+    const better=inv?diff<0:diff>0;
+    const diffStr=diff===0?'stabile':((diff>0?'+':'')+diff+unit);
+    const diffCol=diff===0?'#555':better?'#4ade80':'#f87171';
+    const pts=vals.map((v,i)=>{
+      const x=PL+i*xStep;
+      const pct=inv?(maxV-v)/(maxV*.6):v/maxV;
+      const y=(H-18)-(Math.min(1,Math.max(0,pct))*(H-28))+8;
+      return `${x},${Math.max(6,Math.min(H-10,y))}`;
+    }).join(' ');
+    const dots=vals.map((v,i)=>{
+      if(!v)return '';
+      const x=PL+i*xStep;
+      const pct=inv?(maxV-v)/(maxV*.6):v/maxV;
+      const y=Math.max(6,Math.min(H-10,(H-18)-(Math.min(1,Math.max(0,pct))*(H-28))+8));
+      return `<circle cx="${x}" cy="${y}" r="2.5" fill="${col}"/><text x="${x}" y="${y-6}" text-anchor="middle" font-size="8" fill="${col}">${v}${unit}</text>`;
+    }).join('');
+    const xl=labels.map((l,i)=>`<text x="${PL+i*xStep}" y="${H-2}" text-anchor="middle" font-size="8" fill="#444">${l}</text>`).join('');
+    return `<div style="margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+        <span style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#555;font-weight:600">${title}</span>
+        <span style="font-family:'DM Mono';font-size:10px;color:${diffCol}">${diffStr}</span>
+      </div>
+      <svg width="100%" viewBox="0 0 ${W} ${H}" style="display:block;overflow:visible">
+        <line x1="${PL}" y1="${H-14}" x2="${W-PR}" y2="${H-14}" stroke="#1e1e1e" stroke-width="1"/>
+        <polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.5" opacity=".5" stroke-linejoin="round"/>
+        ${dots}${xl}
+      </svg>
+    </div>`;
+  }
+
+  return chart('Score Totale',scores,'#e8320a',100,false,'')
+    +chart('Plank (sec)',planks,'#60a5fa',300,false,'s')
+    +chart('Squat (reps/60s)',squats,'#4ade80',80,false,'')
+    +chart('Push Up (reps/60s)',pushes,'#fbbf24',60,false,'')
+    +(rows.some(r=>r>0)?chart('Row 500m (sec)',rows,'#f87171',250,true,'s'):'');
+}
+
+// ══════ INIT ══════
+el('f-date').value=new Date().toISOString().slice(0,10);
+const _nd=new Date();_nd.setDate(_nd.getDate()+28);el('f-next-date').value=_nd.toISOString().slice(0,10);
+
+function calcAge(){
+  const dob=el('f-dob').value;
+  if(!dob){el('f-age').value='';el('f-age-display').textContent='';return}
+  const birth=new Date(dob), today=new Date();
+  let age=today.getFullYear()-birth.getFullYear();
+  const m=today.getMonth()-birth.getMonth();
+  if(m<0||(m===0&&today.getDate()<birth.getDate())) age--;
+  el('f-age').value=age;
+  el('f-age-display').textContent='Età: '+age+' anni · moltiplicatore ×'+ageMult(age);
+}
+
+loadClientNames();
+calc();
+</script>
+</body></html>
