@@ -559,24 +559,22 @@ function recalcScore(d){
       ? Math.min(99,Math.max(0,50+(lean-prevLean)*8)) : 50;
   }
 
-  const biaCk = d.hasPrev;
-  const fatPct  = (biaCk&&!isNaN(sBia) &&sBia !==50) ? 0.10 : 0;
-  const leanPct = (biaCk&&!isNaN(sLean)&&sLean!==50) ? 0.10 : 0;
-  const phyTotal = 1 - fatPct - leanPct;
-
-  const items = [
-    [sBia,fatPct],[sLean,leanPct],
-    [sPl, phyTotal*0.25],[sSq,phyTotal*0.25],
-    [sPu, phyTotal*0.25],[sRow,phyTotal*0.25],
+  // Physicals: equal weight among available tests
+  const physItems2=[
+    [sPl,1],[sSq,1],[sPu,1],[sRow,1]
   ];
-  let tw=0,ts=0;
-  items.forEach(([s,w])=>{if(!isNaN(s)&&w>0){ts+=s*w;tw+=w;}});
-  const total = tw>0 ? Math.round(ts/tw) : NaN;
-  const finalLv = isNaN(total)?0:total>=76?4:total>=64?3:total>=50?2:total>=33?1:0;
-
-  // Count valid physical tests
-  const validN = [plank,squat,push,rowAdj].filter(v=>v>0).length;
-
+  let tw2=0,ts2=0;
+  physItems2.forEach(([s,w])=>{if(!isNaN(s)&&s>0){ts2+=s*w;tw2+=w;}});
+  if(tw2===0){return {...d,total:NaN,finalLv:0};}
+  const physScore2=ts2/tw2;
+  let biaDelta2=0;
+  if(d.hasPrev){
+    if(!isNaN(sBia) &&sBia !==50) biaDelta2+=(sBia -50)*0.10;
+    if(!isNaN(sLean)&&sLean!==50) biaDelta2+=(sLean-50)*0.10;
+  }
+  const total=Math.min(99,Math.max(0,Math.round(physScore2+biaDelta2)));
+  const finalLv=total>=76?4:total>=64?3:total>=50?2:total>=33?1:0;
+  const validN=[plank,squat,push,rowAdj].filter(v=>v>0).length;
   return {...d, sPl,sSq,sPu,sRow,sBia,sLean,total,finalLv,mult,sqC,puC,rowC,rowAdj,validN};
 }
 
@@ -656,51 +654,28 @@ function calc(){
   const sPu  = normScore(push,  'push',  mult, puC,  g);
   const sRow = rowTot>0 ? normScore(rowAdj,'row', mult, 1.0, g) : NaN;
 
-  // Weights: 4 tests ×20% + fat delta 10% + lean delta 10%
-  // BIA components active only from 2nd session onward
-  const biaCk = el('cb-bia').checked;
-  const fatPct  = (biaCk && !isNaN(sBia)  && sBia !==50) ? 0.10 : 0;
-  const leanPct = (biaCk && !isNaN(sLean) && sLean!==50) ? 0.10 : 0;
-  const biaTot  = fatPct + leanPct;
-  const phyTotal = 1 - biaTot;
-  const items = [
-    [sBia,  fatPct],
-    [sLean, leanPct],
-    [sPl,  phyTotal * 0.25],
-    [sSq,  phyTotal * 0.25],
-    [sPu,  phyTotal * 0.25],
-    [sRow, phyTotal * 0.25],
+  // Physicals: equal weight among available tests
+  const physItemsC=[
+    [sPl,1],[sSq,1],[sPu,1],[sRow,1]
   ];
-  let tw=0,ts=0;
-  items.forEach(([s,w])=>{if(!isNaN(s)){ts+=s*w;tw+=w}});
-  const total = tw>0 ? Math.round(ts/tw) : NaN;
-
-  // Count valid physical tests
-  const physTests = [
-    {v:!isNaN(plank)?plank:NaN, t:'plank'},
-    {v:!isNaN(squat)?squat:NaN, t:'squat'},
-    {v:!isNaN(push)?push:NaN,   t:'push'},
-    {v:rowAdj>0?rowAdj:NaN,     t:'row'},
-  ];
-  let validN=0;
-  physTests.forEach(({v})=>{if(!isNaN(v)&&v>0) validN++});
-  // Level from total score — non-linear bands (harder at top)
-  // STARTER <33 | ACTIVE 33-49 | STRONG 50-63 | ATHLETE 64-75 | ELITE 76+
-  let finalLv=0;
-  if(!isNaN(total)){
-    if(total>=76) finalLv=4;
-    else if(total>=64) finalLv=3;
-    else if(total>=50) finalLv=2;
-    else if(total>=33) finalLv=1;
-    else finalLv=0;
+  let twC=0,tsC=0;
+  physItemsC.forEach(([s,w])=>{if(!isNaN(s)&&s>0){tsC+=s*w;twC+=w;}});
+  const physScoreC=twC>0?tsC/twC:NaN;
+  let biaDeltaC=0;
+  if(hasPrev){
+    if(!isNaN(sBia) &&sBia !==50) biaDeltaC+=(sBia -50)*0.10;
+    if(!isNaN(sLean)&&sLean!==50) biaDeltaC+=(sLean-50)*0.10;
   }
-
-  el('sb-n').textContent = isNaN(total)?'—':total;
+  const total=isNaN(physScoreC)?NaN:Math.min(99,Math.max(0,Math.round(physScoreC+biaDeltaC)));
+  const finalLv=isNaN(total)?0:total>=76?4:total>=64?3:total>=50?2:total>=33?1:0;
+  const validN=[plank,squat,push,rowAdj].filter(v=>v>0).length;
+    el('sb-n').textContent = isNaN(total)?'—':total;
   el('t-num').textContent = isNaN(total)?'—':total;
   el('t-lv').textContent  = validN>=3 ? LV_NAME[finalLv] : '—';
   const badge = el('sb-badge');
   badge.className = 'lvbadge '+LV_CSS[finalLv];
   badge.textContent = LV_ICON[finalLv]+' '+LV_NAME[finalLv];
+  const g_val=vs('f-gender')||'M', _g=g_val;
   // Update percentile in scorebar (trainer-only view)
   if(!isNaN(total)&&validN>=3){
     try{
@@ -714,7 +689,6 @@ function calc(){
       } else { el('sb-pct').textContent=''; }
     }catch(e){el('sb-pct').textContent='';}
   } else { el('sb-pct').textContent=''; }
-  const g_val=vs('f-gender')||'M', _g=g_val;
   el('sb-note').textContent = validN<3
     ? 'Inserisci almeno 3 test fisici'
     : 'Livello su '+validN+'/4 test · moltiplicatore età ×'+mult;
@@ -911,11 +885,14 @@ function renderHistoryData(sessions, source){
       const rowClick=isGs
         ?`onclick="viewGsReport(${idx_gs})"`
         :`onclick="viewSessionReport(${s._i})"`;
-      out+=`<div class="hrow2${isGs?" gs":""}" style="cursor:pointer" ${rowClick}>
-        <span style="color:var(--mu)">${d}</span>
-        <span style="color:var(--mu);font-size:12px">${trainer}</span>
-        <span style="font-family:'DM Mono';font-weight:600;color:${LV_COL[lv]}">${scoreRaw||'—'}</span>
-        <span><span class="bs ${LV_CSS[lv]}">${LV_ICON[lv]} ${LV_NAME[lv]}</span></span>
+      out+=`<div class="hrow2${isGs?" gs":""}" style="position:relative">
+        <div style="display:contents;cursor:pointer" ${rowClick}>
+          <span style="color:var(--mu)">${d}</span>
+          <span style="color:var(--mu);font-size:12px">${trainer}</span>
+          <span style="font-family:'DM Mono';font-weight:600;color:${LV_COL[lv]}">${scoreRaw||'—'}</span>
+          <span><span class="bs ${LV_CSS[lv]}">${LV_ICON[lv]} ${LV_NAME[lv]}</span></span>
+        </div>
+        ${isGs?`<span onclick="event.stopPropagation();confirmDeleteReport(${idx_gs})" title="Elimina questo report" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);cursor:pointer;color:#555;font-size:14px;padding:4px 6px;border-radius:4px;line-height:1" onmouseover="this.style.color='#e8320a'" onmouseout="this.style.color='#555'">🗑</span>`:''}
       </div>`;
     });
     out+=`</div></div>`;
@@ -1238,6 +1215,39 @@ function addToCalendar(){
 }
 
 
+
+function confirmDeleteReport(idx){
+  const s=_gsAllSessions.find(x=>x._gsIdx===parseInt(idx));
+  if(!s) return;
+  const nm=s['Cliente']||s['Nome e Cognome']||'cliente';
+  const dt=s['Data Sessione']||'data sconosciuta';
+  const sc=s['Score Totale']||'—';
+  if(!confirm(`Eliminare il report di ${nm} del ${dt} (score: ${sc})?
+
+Questa azione è irreversibile.`)) return;
+  deleteGsReport(idx);
+}
+
+async function deleteGsReport(idx){
+  const s=_gsAllSessions.find(x=>x._gsIdx===parseInt(idx));
+  if(!s) return;
+  const rowNum=parseInt(idx)+1; // 1-based data row
+  try{
+    const j=await jsonpFetch(GS_URL+'?action=delete&row='+rowNum);
+    if(j&&j.ok){
+      // Remove from local array and re-render
+      _gsAllSessions=_gsAllSessions.filter(x=>x._gsIdx!==parseInt(idx));
+      // Re-index
+      _gsAllSessions=_gsAllSessions.map((s2,i)=>({...s2,_gsIdx:i}));
+      renderHistoryData(_gsAllSessions,'gs');
+    } else {
+      alert('Errore durante l\'eliminazione. Riprova.');
+    }
+  }catch(e){
+    alert('Errore di connessione. Riprova.');
+  }
+}
+
 function viewGsReport(idx){_viewGsReportAsync(parseInt(idx));}
 async function _viewGsReportAsync(idx){
   const s=_gsAllSessions.find(x=>x._gsIdx===parseInt(idx))||_gsAllSessions[parseInt(idx)];
@@ -1386,18 +1396,82 @@ function buildReport(d){
     let sBia=NaN,sLn=NaN;
     if(!isNaN(fat)) sBia=(d.hasPrev&&!isNaN(prevFat)&&prevFat>0)?Math.min(99,Math.max(0,50+(prevFat-fat)*8)):50;
     if(!isNaN(lean)) sLn=(d.hasPrev&&!isNaN(prevLean)&&prevLean>0)?Math.min(99,Math.max(0,50+(lean-prevLean)*8)):50;
-    const fatPct=(d.hasPrev&&!isNaN(sBia)&&sBia!==50)?0.10:0;
-    const lnPct=(d.hasPrev&&!isNaN(sLn)&&sLn!==50)?0.10:0;
-    const ph=1-fatPct-lnPct;
-    const items=[[sBia,fatPct],[sLn,lnPct],[sPl,ph*0.25],[sSq,ph*0.25],[sPu,ph*0.25],[sRw,ph*0.25]];
+    // Physicals: equal weight among available tests
+    const physItems=[[sPl,1],[sSq,1],[sPu,1],[sRw,1]];
     let tw=0,ts=0;
-    items.forEach(([s,w])=>{if(!isNaN(s)&&w>0){ts+=s*w;tw+=w;}});
-    return tw>0?Math.round(ts/tw):NaN;
+    physItems.forEach(([s,w])=>{if(!isNaN(s)&&s>0){ts+=s*w;tw+=w;}});
+    if(tw===0) return NaN;
+    const physScore=ts/tw;
+    // BIA: pure delta bonus/malus on top of physical score (±10 pts per component)
+    // Guarantees: improvement never lowers total, worsening never raises it
+    let biaDelta=0;
+    if(d.hasPrev&&!isNaN(sBia)&&sBia!==50) biaDelta+=(sBia-50)*0.10;
+    if(d.hasPrev&&!isNaN(sLn)&&sLn!==50)   biaDelta+=(sLn-50)*0.10;
+    return Math.min(99,Math.max(0,Math.round(physScore+biaDelta)));
   }
   const rawScore=calcRawScore(d);
   const rawScoreHtml=(!isNaN(rawScore))
     ?`<div style="font-size:11px;color:#999;margin-top:3px">Score assoluto: <strong style="color:#777">${rawScore}</strong> <span style="color:#bbb">(senza compenso età)</span></div>`
     :'';
+
+  // ── IMPROVEMENT BOX (dalla 2ª sessione) ──────────────────────────────
+  function buildImprovementBox(d){
+    if(!d.hasPrev) return ''; // prima sessione, niente confronto
+    const tests=[];
+    // Plank
+    if(d.plank>0&&parseFloat(d.pPlank)>0){
+      const prev=parseFloat(d.pPlank),cur=parseFloat(d.plank);
+      const pct=Math.round((cur-prev)/prev*100);
+      tests.push({name:'Plank',pct,unit:'s',cur:cur,prev:prev});
+    }
+    // Squat
+    if(d.squat>0&&parseFloat(d.pSquat)>0){
+      const prev=parseFloat(d.pSquat),cur=parseFloat(d.squat);
+      const pct=Math.round((cur-prev)/prev*100);
+      tests.push({name:'Squat',pct,unit:'reps',cur:cur,prev:prev});
+    }
+    // Push Up
+    if(d.push>0&&parseFloat(d.pPush)>0){
+      const prev=parseFloat(d.pPush),cur=parseFloat(d.push);
+      const pct=Math.round((cur-prev)/prev*100);
+      tests.push({name:'Push Up',pct,unit:'reps',cur:cur,prev:prev});
+    }
+    // Row (tempo — inversione: meno è meglio)
+    const pRwTot2=(parseFloat(d.pRmin)||0)*60+(parseFloat(d.pRsec)||0);
+    if(d.rowTot>0&&pRwTot2>0){
+      const pct=Math.round((pRwTot2-d.rowTot)/pRwTot2*100); // positivo se più veloce
+      tests.push({name:'Row',pct,unit:'',cur:d.rowTot,prev:pRwTot2,isTime:true});
+    }
+    if(tests.length===0) return '';
+    const improved=tests.filter(t=>t.pct>0);
+    const avgImprovement=improved.length>0
+      ?Math.round(improved.reduce((s,t)=>s+t.pct,0)/improved.length)
+      :0;
+    const rows=tests.map(t=>{
+      const col=t.pct>0?'#22c55e':t.pct<0?'#f87171':'#999';
+      const arrow=t.pct>0?'↑':t.pct<0?'↓':'→';
+      const sign=t.pct>0?'+':'';
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0eeeb">
+        <span style="font-size:13px;color:#555">${t.name}</span>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:12px;color:#aaa">${t.isTime?fmtT(t.prev):t.prev+' '+t.unit} → ${t.isTime?fmtT(t.cur):t.cur+' '+t.unit}</span>
+          <span style="font-family:'DM Mono';font-size:14px;font-weight:600;color:${col};min-width:48px;text-align:right">${arrow} ${sign}${t.pct}%</span>
+        </div>
+      </div>`;
+    }).join('');
+    const headerColor=avgImprovement>0?'#22c55e':avgImprovement<0?'#f87171':'#999';
+    const headerMsg=avgImprovement>0
+      ?`Media miglioramento: <strong style="color:#22c55e">+${avgImprovement}%</strong>`
+      :avgImprovement<0
+      ?`Media variazione: <strong style="color:#f87171">${avgImprovement}%</strong>`
+      :'Performance stabile rispetto alla sessione precedente.';
+    return `<div class="st">Variazione rispetto alla sessione precedente</div>
+    <div class="card" style="margin-bottom:12px">
+      <div style="padding:14px 16px;background:#f9f8f6;border-bottom:1px solid #e8e5e0;font-size:13px;color:#444">${headerMsg}</div>
+      <div style="padding:4px 16px 4px">${rows}</div>
+    </div>`;
+  }
+  const improvementBox=buildImprovementBox(d);
 
   // ── SCORE PREDICTION (sync) ────────────────────────────────────────────
   function buildPrediction(history, curScore, curLv){
@@ -1546,6 +1620,7 @@ td{border-bottom:1px solid #f0eeeb;vertical-align:middle;color:#1a1a1a}tr:last-c
     </tbody>
   </table></div>
 
+  ${improvementBox}
   <div class="st">Composizione Corporea — BIA</div>
   <div class="card"><table>
     <thead><tr><th>Parametro</th><th>Sessione</th><th>Precedente</th></tr></thead>
