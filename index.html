@@ -1269,13 +1269,18 @@ function viewGsReport(idx){_viewGsReportAsync(parseInt(idx));}
 async function _viewGsReportAsync(idx){
   const s=_gsAllSessions.find(x=>x._gsIdx===parseInt(idx))||_gsAllSessions[parseInt(idx)];
   if(!s) return;
-  const d=gsRowToD(s);
+  let d=gsRowToD(s);
   // Build client history for charts from all gs sessions of same client
   const clientName=(d.name||'').toLowerCase();
   const prevHistory=_clientHistory;
   _clientHistory=_gsAllSessions
     .filter(r=>(r['Cliente']||r['Nome e Cognome']||r.name||'').toLowerCase()===clientName)
-    .sort((a,b)=>{const da=a['Data Sessione']||'',db=b['Data Sessione']||'';const pa=da.includes('/')?da.split('/').reverse().join('-'):da;const pb=db.includes('/')?db.split('/').reverse().join('-'):db;return pa>pb?1:-1;})
+    .sort((a,b)=>{
+      // Normalize dd/mm/yyyy or yyyy-mm-dd to ISO for reliable comparison
+      const toISO=s=>{if(!s)return'';const p=String(s).split('/');return p.length===3?p[2]+'-'+p[1]+'-'+p[0]:s;};
+      const da=toISO(a['Data Sessione']||''), db=toISO(b['Data Sessione']||'');
+      return da>db?1:da<db?-1:0;
+    })
     .map(r=>({
         'Data Sessione':r['Data Sessione']||'',
         'N° Sessione':r['N° Sessione']||'',
@@ -1298,10 +1303,11 @@ async function _viewGsReportAsync(idx){
   // Inject prev circumferences and prevLean from previous GSheets session
   const clientSessions=_gsAllSessions
     .filter(r=>(r['Cliente']||r['Nome e Cognome']||'').toLowerCase()===clientName)
-    .sort((a,b)=>{const da=a['Data Sessione']||'',db=b['Data Sessione']||'';
-      const pa=da.includes('/')?da.split('/').reverse().join('-'):da;
-      const pb=db.includes('/')?db.split('/').reverse().join('-'):db;
-      return pa>pb?1:-1;});
+    .sort((a,b)=>{
+      const toISO=s=>{if(!s)return'';const p=String(s).split('/');return p.length===3?p[2]+'-'+p[1]+'-'+p[0]:s;};
+      const da=toISO(a['Data Sessione']||''), db=toISO(b['Data Sessione']||'');
+      return da>db?1:da<db?-1:0;
+    });
   const sessIdx=clientSessions.findIndex(r=>r._gsIdx===idx);
   if(sessIdx>0){
     const prev=clientSessions[sessIdx-1];
