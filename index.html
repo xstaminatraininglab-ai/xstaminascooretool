@@ -942,12 +942,26 @@ function viewSessionReport(i){
     "Row min:sec":fmtT(x.rowTot),
     "Massa Grassa %":x.fat||'',
   }));
-  const sRecalc=recalcScore({...s,
+  // Inject prevCirc from the actual previous local session
+  const _sortedLocal=clientSessions.slice().sort((a,b)=>((a.date||a._saved)>(b.date||b._saved)?1:-1));
+  const _thisIdx2=_sortedLocal.findIndex(x=>x===s);
+  const _prevLocal=_thisIdx2>0?_sortedLocal[_thisIdx2-1]:null;
+  const _sWithPrev={...s,
     rowTot:s.rowTot||0,
-    hasPrev:!!(s.pPlank||s.pSquat||s.pPush||s.pRmin),
-    pLean:s.pLean||s.lean||''
-  });
-  const reportHtml=buildReport(sRecalc||s);
+    hasPrev:!!(s.pPlank||s.pSquat||s.pPush||s.pRmin||s.prevFat>0),
+    pLean:s.pLean||s.lean||'',
+    prevLean:s.prevLean||0,
+    pVita:   _prevLocal?(_prevLocal.vita||''):'',
+    pSeno:   _prevLocal?(_prevLocal.seno||''):'',
+    pFianchi:_prevLocal?(_prevLocal.fianchi||''):'',
+    pCoscia: _prevLocal?(_prevLocal.coscia||''):'',
+    pCoscia2:_prevLocal?(_prevLocal.coscia2||''):'',
+    pBraccio:_prevLocal?(_prevLocal.braccio||''):'',
+    hasPrevCirc:!!(_prevLocal&&(_prevLocal.vita||_prevLocal.seno||_prevLocal.fianchi)),
+    pPeso:   _prevLocal?(_prevLocal.peso||''):'',
+  };
+  const sRecalc=recalcScore(_sWithPrev);
+  const reportHtml=buildReport(sRecalc||_sWithPrev);
   _clientHistory=prevHistory;
   _currentReportHtml=reportHtml;
   showReportOverlay(reportHtml);
@@ -1297,6 +1311,7 @@ async function _viewGsReportAsync(idx){
     d.pCoscia = prev['Girocoscia cm']||'';
     d.pCoscia2= prev['Coscia Media cm']||'';
     d.pBraccio= prev['Braccio cm']||'';
+    d.pPeso   = prev['Peso kg']||'';
     d.hasPrevCirc = !!(d.pVita||d.pSeno||d.pFianchi);
     // prevLean from actual previous session (not from column)
     if(!d.prevLean||d.prevLean===0){
@@ -1446,15 +1461,19 @@ function buildReport(d){
   // Previous score comparison
   const prevScoreRaw=(()=>{
     if(!d.hasPrev||!_clientHistory||_clientHistory.length<1) return 0;
-    const sorted=_clientHistory.slice().sort((a,b)=>{
-      const da=a['Data Sessione']||a.date||'',db=b['Data Sessione']||b.date||'';
-      const pa=da.includes('/')?da.split('/').reverse().join('-'):da;
-      const pb=db.includes('/')?db.split('/').reverse().join('-'):db;
-      return pa>pb?1:-1;
-    });
-    // The last entry is current session (added in _histWithCurrent), so take second-to-last
-    const prev=sorted.length>=2?sorted[sorted.length-2]:sorted[0];
-    return parseInt(prev['Score Totale']||prev.total||0)||0;
+    // Normalize current date to ISO for comparison
+    const normD=s=>{ if(!s)return ''; const p=s.split('/'); return p.length===3?p[2]+'-'+p[1]+'-'+p[0]:s; };
+    const currISO=normD(d.date||'');
+    // Filter out current session, sort ascending, take last = most recent before current
+    const hist=_clientHistory.slice()
+      .filter(h=>normD(h['Data Sessione']||h.date||'')!==currISO)
+      .sort((a,b)=>{
+        const pa=normD(a['Data Sessione']||a.date||'');
+        const pb=normD(b['Data Sessione']||b.date||'');
+        return pa>pb?1:-1;
+      });
+    if(!hist.length) return 0;
+    return parseInt(hist[hist.length-1]['Score Totale']||hist[hist.length-1].total||0)||0;
   })();
   const prevScoreHtml=(prevScoreRaw>0&&!isNaN(d.total))?(()=>{
     const diff=d.total-prevScoreRaw;
