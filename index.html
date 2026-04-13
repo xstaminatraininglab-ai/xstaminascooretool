@@ -696,7 +696,7 @@ function calc(){
   el('sm-s').textContent=fmtN(sSq);  el('sm-u').textContent=fmtN(sPu);
   el('sm-r').textContent=fmtN(sRow);
 
-  _D = {total,finalLv,sBia,sPl,sSq,sPu,sRow,age,gender:g,mult,hasPrev,fat,prevFat,
+  _D = {total,finalLv,sBia,sPl,sSq,sPu,sRow,age,gender:g,mult,hasPrev,fat,prevFat,prevLean:vf('p-lean')||0,
     plank,squat,push,rowTot,rowAdj,sqVariant:V.sq,puVariant:V.pu,rowVariant:V.row,
     sqC,puC,rowC,validN,
     name:vs('f-name'),trainer:vs('f-trainer'),date:vs('f-date'),session:vs('f-session')||'1',dob:vs('f-dob'),sLean,
@@ -824,12 +824,15 @@ function gsRowToD(s){
     vita:      s['Vita cm']||'', seno:s['Seno cm']||'',
     fianchi:   s['Fianchi cm']||'', coscia:s['Girocoscia cm']||'',
     coscia2:   s['Coscia Media cm']||'', braccio:s['Braccio cm']||'',
+    prevLean:  parseFloat(s['MM% Precedente'])||0,
     pVita:'',pSeno:'',pFianchi:'',pCoscia:'',pCoscia2:'',pBraccio:'',
     hasPrevCirc:false,
     note:      s['Note Trainer']||'',
     validN:    [s['Plank sec'],s['Squat reps'],s['Push Up reps'],rowTot>0?1:0].filter(v=>parseInt(v)>0).length,
     nextDate:'', nextNote:''
   };
+  // hasPrev = true if either fat or lean prev is available
+  raw.hasPrev = raw.prevFat>0 || raw.prevLean>0;
   return recalcScore(raw);
 }
 
@@ -926,7 +929,7 @@ function viewSessionReport(i){
   if(!s) return;
   // Rebuild _clientHistory for this client to enable charts
   const clientSessions=h.filter(x=>(x.name||'')===s.name)
-    .sort((a,b)=>((a.date||a._saved)<(b.date||b._saved)?1:-1));
+    .sort((a,b)=>((a.date||a._saved)>(b.date||b._saved)?1:-1));
   // Temporarily set _clientHistory for chart building
   const prevHistory=_clientHistory;
   _clientHistory=clientSessions.map(x=>({
@@ -1259,19 +1262,17 @@ async function _viewGsReportAsync(idx){
   _clientHistory=_gsAllSessions
     .filter(r=>(r['Cliente']||r['Nome e Cognome']||r.name||'').toLowerCase()===clientName)
     .sort((a,b)=>{const da=a['Data Sessione']||'',db=b['Data Sessione']||'';const pa=da.includes('/')?da.split('/').reverse().join('-'):da;const pb=db.includes('/')?db.split('/').reverse().join('-'):db;return pa>pb?1:-1;})
-    .map(r=>{
-      const p=String(r['Row min:sec']||'').split(':');
-      return {
+    .map(r=>({
         'Data Sessione':r['Data Sessione']||'',
         'N° Sessione':r['N° Sessione']||'',
-        'Score Totale':(function(){try{var rr=recalcScore(gsRowToD(r));return rr&&!isNaN(rr.total)?rr.total:r['Score Totale']||""}catch(e){return r['Score Totale']||""}})(),'_rawScore':r['Score Totale']||'',
+        'Score Totale':(function(){try{var rr=recalcScore(gsRowToD(r));return rr&&!isNaN(rr.total)?rr.total:r['Score Totale']||""}catch(e){return r['Score Totale']||""}})(),
+        '_rawScore':r['Score Totale']||'',
         'Plank sec':r['Plank sec']||'',
         'Squat reps':r['Squat reps']||'',
         'Push Up reps':r['Push Up reps']||'',
         'Row min:sec':r['Row min:sec']||'',
         'Massa Grassa %':r['Massa Grassa %']||'',
-      };
-    });
+      }));
   // Pre-fetch allscores for percentile
   try{
     const j=await Promise.race([
@@ -1280,6 +1281,31 @@ async function _viewGsReportAsync(idx){
     ]);
     if(j&&j.ok&&j.scores) _allScores=j.scores.map(x=>parseInt(x)||0).filter(v=>v>0);
   }catch(e){}
+  // Inject prev circumferences and prevLean from previous GSheets session
+  const clientSessions=_gsAllSessions
+    .filter(r=>(r['Cliente']||r['Nome e Cognome']||'').toLowerCase()===clientName)
+    .sort((a,b)=>{const da=a['Data Sessione']||'',db=b['Data Sessione']||'';
+      const pa=da.includes('/')?da.split('/').reverse().join('-'):da;
+      const pb=db.includes('/')?db.split('/').reverse().join('-'):db;
+      return pa>pb?1:-1;});
+  const sessIdx=clientSessions.findIndex(r=>r._gsIdx===idx);
+  if(sessIdx>0){
+    const prev=clientSessions[sessIdx-1];
+    d.pVita   = prev['Vita cm']||'';
+    d.pSeno   = prev['Seno cm']||'';
+    d.pFianchi= prev['Fianchi cm']||'';
+    d.pCoscia = prev['Girocoscia cm']||'';
+    d.pCoscia2= prev['Coscia Media cm']||'';
+    d.pBraccio= prev['Braccio cm']||'';
+    d.hasPrevCirc = !!(d.pVita||d.pSeno||d.pFianchi);
+    // prevLean from actual previous session (not from column)
+    if(!d.prevLean||d.prevLean===0){
+      d.prevLean = parseFloat(prev['Massa Magra %'])||0;
+      if(d.prevLean>0) d.hasPrev=true;
+    }
+    // Also recalc with updated prevLean
+    d = recalcScore(d);
+  }
   const reportHtml=buildReport(d);
   _clientHistory=prevHistory;
   _currentReportHtml=reportHtml;
@@ -1370,10 +1396,14 @@ function buildReport(d){
     return `<tr><td style="padding:8px 14px;color:#555;font-size:11px;text-transform:uppercase">${lbl} <span style="color:#333">${w}</span></td>
     <td style="padding:8px 14px"><div style="display:flex;align-items:center;gap:8px">${bar(sc)}<span style="font-family:monospace;font-size:12px;min-width:24px;text-align:right;color:#777">${fmtN(sc)}</span></div></td></tr>`
   }
-  function crow(lbl,cur,prev,inv=false){
+  function crow(lbl,cur,prev){
     if(!cur||cur==='')return '';
+    // Neutral delta for circumferences — no colour judgement
+    const _c=parseFloat(cur),_p=parseFloat(prev);
+    const circDlt=(!isNaN(_c)&&!isNaN(_p)&&prev!=='')?
+      `<span style="font-size:11px;margin-left:5px;color:#888">${(_c-_p)>0?'+':''}${Math.round((_c-_p)*10)/10}</span>`:'';
     return `<tr><td style="padding:8px 14px;color:#555;font-size:11px;text-transform:uppercase">${lbl}</td>
-    <td style="padding:8px 14px;font-weight:500">${fn(cur)} cm${dlt(cur,prev,inv)}</td>
+    <td style="padding:8px 14px;font-weight:500">${fn(cur)} cm${circDlt}</td>
     <td style="padding:8px 14px;color:#444">${prev&&prev!==''?fn(prev)+' cm':'—'}</td></tr>`
   }
 
@@ -1413,6 +1443,27 @@ function buildReport(d){
   const rawScoreHtml=(!isNaN(rawScore))
     ?`<div style="font-size:11px;color:#999;margin-top:3px">Score assoluto: <strong style="color:#777">${rawScore}</strong> <span style="color:#bbb">(senza compenso età)</span></div>`
     :'';
+  // Previous score comparison
+  const prevScoreRaw=(()=>{
+    if(!d.hasPrev||!_clientHistory||_clientHistory.length<1) return 0;
+    const sorted=_clientHistory.slice().sort((a,b)=>{
+      const da=a['Data Sessione']||a.date||'',db=b['Data Sessione']||b.date||'';
+      const pa=da.includes('/')?da.split('/').reverse().join('-'):da;
+      const pb=db.includes('/')?db.split('/').reverse().join('-'):db;
+      return pa>pb?1:-1;
+    });
+    // The last entry is current session (added in _histWithCurrent), so take second-to-last
+    const prev=sorted.length>=2?sorted[sorted.length-2]:sorted[0];
+    return parseInt(prev['Score Totale']||prev.total||0)||0;
+  })();
+  const prevScoreHtml=(prevScoreRaw>0&&!isNaN(d.total))?(()=>{
+    const diff=d.total-prevScoreRaw;
+    const pct=Math.round(Math.abs(diff)/prevScoreRaw*100);
+    const col=diff>0?'#22c55e':diff<0?'#f87171':'#999';
+    const arrow=diff>0?'↑':diff<0?'↓':'→';
+    const sign=diff>0?'+':'';
+    return `<div style="font-size:12px;color:#888;margin-top:4px">Precedente: <strong style="color:#aaa">${prevScoreRaw}</strong> · <span style="color:${col};font-weight:600">${arrow} ${sign}${diff} pts (${sign}${pct}%)</span></div>`;
+  })():'';
 
   // ── IMPROVEMENT BOX (dalla 2ª sessione) ──────────────────────────────
   function buildImprovementBox(d){
@@ -1594,6 +1645,7 @@ td{border-bottom:1px solid #f0eeeb;vertical-align:middle;color:#1a1a1a}tr:last-c
     <div class="hero-sc">${isNaN(d.total)?'—':d.total}</div>
     <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#999;margin-top:4px">Xstamina Score / 99</div>
     ${rawScoreHtml}
+    ${prevScoreHtml}
   </div>
 
   ${prediction}${ranking}${charts?`<div class="st">Progressione nel Tempo · ${_clientHistory.length} sessioni</div><div class="card" style="padding:16px 16px 6px">${charts}</div>`:''}
@@ -1641,12 +1693,12 @@ td{border-bottom:1px solid #f0eeeb;vertical-align:middle;color:#1a1a1a}tr:last-c
   ${hasCirc?`<div class="st">Circonferenze</div><div class="card"><table>
     <thead><tr><th>Misura</th><th>Sessione</th><th>Precedente</th></tr></thead>
     <tbody>
-      ${crow('Vita',d.vita,d.hasPrevCirc?d.pVita:'',true)}
-      ${crow('Seno / Torace',d.seno,d.hasPrevCirc?d.pSeno:'',true)}
-      ${crow('Fianchi',d.fianchi,d.hasPrevCirc?d.pFianchi:'',true)}
-      ${crow('Girocoscia',d.coscia,d.hasPrevCirc?d.pCoscia:'',true)}
-      ${crow('Coscia media',d.coscia2,d.hasPrevCirc?d.pCoscia2:'',true)}
-      ${crow('Braccio',d.braccio,d.hasPrevCirc?d.pBraccio:'',true)}
+      ${crow('Vita',d.vita,d.hasPrevCirc?d.pVita:'')}
+      ${crow('Seno / Torace',d.seno,d.hasPrevCirc?d.pSeno:'')}
+      ${crow('Fianchi',d.fianchi,d.hasPrevCirc?d.pFianchi:'')}
+      ${crow('Girocoscia',d.coscia,d.hasPrevCirc?d.pCoscia:'')}
+      ${crow('Coscia media',d.coscia2,d.hasPrevCirc?d.pCoscia2:'')}
+      ${crow('Braccio',d.braccio,d.hasPrevCirc?d.pBraccio:'')}
     </tbody>
   </table></div>`:''}
 
