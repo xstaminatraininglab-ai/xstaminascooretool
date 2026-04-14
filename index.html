@@ -1276,10 +1276,8 @@ async function _viewGsReportAsync(idx){
   _clientHistory=_gsAllSessions
     .filter(r=>(r['Cliente']||r['Nome e Cognome']||r.name||'').toLowerCase()===clientName)
     .sort((a,b)=>{
-      // Normalize dd/mm/yyyy or yyyy-mm-dd to ISO for reliable comparison
-      const toISO=s=>{if(!s)return'';const p=String(s).split('/');return p.length===3?p[2]+'-'+p[1]+'-'+p[0]:s;};
-      const da=toISO(a['Data Sessione']||''), db=toISO(b['Data Sessione']||'');
-      return da>db?1:da<db?-1:0;
+      const toMs=s=>{if(!s)return 0;const p=String(s).split('/');const iso=p.length===3?p[2]+'-'+p[1]+'-'+p[0]:s;const t=new Date(iso).getTime();return isNaN(t)?0:t;};
+      return toMs(a['Data Sessione']||'')-toMs(b['Data Sessione']||'');
     })
     .map(r=>({
         'Data Sessione':r['Data Sessione']||'',
@@ -1304,9 +1302,8 @@ async function _viewGsReportAsync(idx){
   const clientSessions=_gsAllSessions
     .filter(r=>(r['Cliente']||r['Nome e Cognome']||'').toLowerCase()===clientName)
     .sort((a,b)=>{
-      const toISO=s=>{if(!s)return'';const p=String(s).split('/');return p.length===3?p[2]+'-'+p[1]+'-'+p[0]:s;};
-      const da=toISO(a['Data Sessione']||''), db=toISO(b['Data Sessione']||'');
-      return da>db?1:da<db?-1:0;
+      const toMs=s=>{if(!s)return 0;const p=String(s).split('/');const iso=p.length===3?p[2]+'-'+p[1]+'-'+p[0]:s;const t=new Date(iso).getTime();return isNaN(t)?0:t;};
+      return toMs(a['Data Sessione']||'')-toMs(b['Data Sessione']||'');
     });
   const sessIdx=clientSessions.findIndex(r=>r._gsIdx===idx);
   if(sessIdx>0){
@@ -1466,18 +1463,15 @@ function buildReport(d){
     :'';
   // Previous score comparison
   const prevScoreRaw=(()=>{
-    if(!d.hasPrev||!_clientHistory||_clientHistory.length<1) return 0;
-    // Normalize current date to ISO for comparison
-    const normD=s=>{ if(!s)return ''; const p=s.split('/'); return p.length===3?p[2]+'-'+p[1]+'-'+p[0]:s; };
-    const currISO=normD(d.date||'');
-    // Filter out current session, sort ascending, take last = most recent before current
+    if(!_clientHistory||_clientHistory.length<1) return 0;
+    // Use timestamps for reliable comparison across all date formats
+    const toMs=s=>{if(!s)return 0;const p=String(s).split('/');const iso=p.length===3?p[2]+'-'+p[1]+'-'+p[0]:s;const t=new Date(iso).getTime();return isNaN(t)?0:t;};
+    const currMs=toMs(d.date||'');
+    if(!currMs) return 0;
+    // Only sessions strictly before current session by date
     const hist=_clientHistory.slice()
-      .filter(h=>normD(h['Data Sessione']||h.date||'')!==currISO)
-      .sort((a,b)=>{
-        const pa=normD(a['Data Sessione']||a.date||'');
-        const pb=normD(b['Data Sessione']||b.date||'');
-        return pa>pb?1:-1;
-      });
+      .filter(h=>toMs(h['Data Sessione']||h.date||'')<currMs)
+      .sort((a,b)=>toMs(a['Data Sessione']||a.date||'')-toMs(b['Data Sessione']||b.date||''));
     if(!hist.length) return 0;
     return parseInt(hist[hist.length-1]['Score Totale']||hist[hist.length-1].total||0)||0;
   })();
