@@ -1565,8 +1565,6 @@ function buildReport(d){
         const dt=new Date();dt.setDate(dt.getDate()+weeks*7);
         const dtStr=dt.toLocaleDateString('it-IT',{month:'long',year:'numeric'});
         projLine=`Progressione media: <strong style="color:#fff">+${rawAvg.toFixed(1)} pt</strong> per ciclo.<br>Se continui così: <strong style="color:#4ade80">~${weeks} settimane</strong> — entro <strong style="color:#fff">${dtStr}</strong>. 💪`;
-      } else if(rawAvg<=0){
-        projLine='<span style="color:#f87171">Score in calo rispetto alla sessione precedente. Analizza i test singoli.</span>';
       }
     }
     const ptsHtml=ptsLeft>0
@@ -1699,7 +1697,7 @@ td{border-bottom:1px solid #f0eeeb;vertical-align:middle;color:#1a1a1a}tr:last-c
       <tr><td style="padding:8px 14px;color:#555;font-size:11px;text-transform:uppercase">Massa grassa % ★ <span style='color:#888;font-size:10px'>(punteggio 10%)</span></td>
       <td style="padding:8px 14px;font-weight:500">${fn(d.fat)} %${dlt(d.fat,d.hasPrev?d.prevFat:'',true)}</td>
       <td style="padding:8px 14px;color:#444">${d.hasPrev&&d.prevFat?fn(d.prevFat)+' %':'—'}</td></tr>
-      <tr><td style="padding:8px 14px;color:#555;font-size:11px;text-transform:uppercase">Massa magra % ★ <span style=\'color:#888;font-size:10px\'>(punteggio 10%)</span></td>\n      <td style="padding:8px 14px;font-weight:500">${fn(d.lean)} %</td>\n      <td style="padding:8px 14px;color:#444">${d.hasPrev&&d.prevLean?fn(d.prevLean)+' %':'—'}</td></tr>
+      <tr><td style="padding:8px 14px;color:#555;font-size:11px;text-transform:uppercase">Massa magra % ★ <span style=\'color:#888;font-size:10px\'>(punteggio 10%)</span></td>\n      <td style="padding:8px 14px;font-weight:500">${fn(d.lean)} %${dlt(d.lean,d.hasPrev?d.prevLean:'',false)}</td>\n      <td style="padding:8px 14px;color:#444">${d.hasPrev&&d.prevLean?fn(d.prevLean)+' %':'—'}</td></tr>
       <tr><td style="padding:8px 14px;color:#555;font-size:11px;text-transform:uppercase">Peso</td>
       <td style="padding:8px 14px;font-weight:500">${d.peso?fn(d.peso)+' kg':'—'}</td>
       <td style="padding:8px 14px;color:#444">${d.hasPrev&&d.pPeso?fn(d.pPeso)+' kg':'—'}</td></tr>
