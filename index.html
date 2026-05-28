@@ -33,7 +33,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--red)}
 input::placeholder,textarea::placeholder{color:var(--mu2)}
 input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none}
 input[type=number]{-moz-appearance:textfield}
-select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23666' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center;padding-right:30px}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23666' stroke-width='3' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center;padding-right:30px}
 select option{background:#ffffff;color:#1a1a1a}
 textarea{resize:vertical;min-height:80px}
 input.err,select.err{border-color:#ef4444!important}
@@ -499,8 +499,8 @@ const LV_BDR=['#333','#166534','#1e3a5f','#5a4200','#5a1a1a'];
 
 // ══════ SCORING ══════
 // best = theoretical max, unreachable by normal clients → 100 is impossible
-const BEST  = {plank:350, squat:100, push:80, rowM:70, rowF:100};
-const WORST = {plank:0,   squat:0,   push:0,  rowM:200, rowF:230}; // row worst same for both genders
+const BEST  = {plank:480, squat:80,  push:60, rowM:80, rowF:110};
+const WORST = {plank:0,   squat:0,   push:0,  rowM:210, rowF:240}; // row worst same for both genders
 
 // Thresholds for level assignment (raw adjusted value)
 const THR = {
@@ -573,7 +573,7 @@ function recalcScore(d){
     if(!isNaN(sLean)&&sLean!==50) biaDelta2+=(sLean-50)*0.10;
   }
   const total=Math.min(99,Math.max(0,Math.round(physScore2+biaDelta2)));
-  const finalLv=total>=76?4:total>=64?3:total>=50?2:total>=33?1:0;
+  const finalLv=total>=80?4:total>=63?3:total>=47?2:total>=30?1:0;
   const validN=[plank,squat,push,rowAdj].filter(v=>v>0).length;
   return {...d, sPl,sSq,sPu,sRow,sBia,sLean,total,finalLv,mult,sqC,puC,rowC,rowAdj,validN};
 }
@@ -667,7 +667,7 @@ function calc(){
     if(!isNaN(sLean)&&sLean!==50) biaDeltaC+=(sLean-50)*0.10;
   }
   const total=isNaN(physScoreC)?NaN:Math.min(99,Math.max(0,Math.round(physScoreC+biaDeltaC)));
-  const finalLv=isNaN(total)?0:total>=76?4:total>=64?3:total>=50?2:total>=33?1:0;
+  const finalLv=isNaN(total)?0:total>=80?4:total>=63?3:total>=47?2:total>=30?1:0;
   const validN=[plank,squat,push,rowAdj].filter(v=>v>0).length;
     el('sb-n').textContent = isNaN(total)?'—':total;
   el('t-num').textContent = isNaN(total)?'—':total;
@@ -873,17 +873,29 @@ function renderHistoryData(sessions, source){
         const dt=new Date(dateRaw.includes('/')?dateRaw.split('/').reverse().join('-'):dateRaw);
         if(!isNaN(dt)) d=dt.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'2-digit'});
       }catch(e){}
-      // Recalc score with current system if raw data available
+      // Recalc score with full inject logic (same as report)
       let scoreRaw=parseInt(s['Score Totale']||s.total||0)||0;
       if(isGs&&s['Plank sec']&&parseInt(s['Plank sec'])>0){
         try{
-          const _rd=gsRowToD(s);
+          let _rd=gsRowToD(s);
+          // Inject prev session data (same logic as _viewGsReportAsync)
+          const _clientName=(_rd.name||'').toLowerCase();
+          const _clientSess=_gsAllSessions
+            .filter(r=>(r['Cliente']||r['Nome e Cognome']||'').toLowerCase()===_clientName)
+            .sort((a,b)=>{const toMs=s=>{if(!s)return 0;const p=String(s).split('/');const iso=p.length===3?p[2]+'-'+p[1]+'-'+p[0]:s;const t=new Date(iso).getTime();return isNaN(t)?0:t;};return toMs(a['Data Sessione']||'')-toMs(b['Data Sessione']||'');});
+          const _si=_clientSess.findIndex(r=>r._gsIdx===s._gsIdx);
+          if(_si>0){
+            const _prev=_clientSess[_si-1];
+            if(!_rd.prevLean||_rd.prevLean===0) _rd.prevLean=parseFloat(_prev['Massa Magra %'])||0;
+            if(_rd.prevLean>0) _rd.hasPrev=true;
+            _rd=recalcScore(_rd);
+          }
           if(!isNaN(_rd.total)&&_rd.total>0) scoreRaw=_rd.total;
         }catch(e){}
       }
       const lvRaw=parseInt(s['Livello']||s.finalLv||0)||0;
       // Determine level from score if finalLv not stored
-      const lv=scoreRaw>=76?4:scoreRaw>=64?3:scoreRaw>=50?2:scoreRaw>=33?1:0;
+      const lv=scoreRaw>=80?4:scoreRaw>=63?3:scoreRaw>=47?2:scoreRaw>=30?1:0;
       const trainer=s['Trainer']||s.trainer||'—';
       const rowClick=isGs
         ?`onclick="viewGsReport(${idx_gs})"`
@@ -1546,7 +1558,7 @@ function buildReport(d){
   // ── SCORE PREDICTION (sync) ────────────────────────────────────────────
   function buildPrediction(history, curScore, curLv){
     if(curLv>=4) return '';
-    const nextThr=[33,50,64,76][curLv];
+    const nextThr=[30,47,63,80][curLv];
     const nextNm=['ACTIVE','STRONG','ATHLETE','ELITE'][curLv];
     const ptsLeft=Math.max(0,nextThr-curScore);
     // Time projection — only if we have 2+ sessions with improving score
@@ -1784,7 +1796,7 @@ function buildCharts(history){
       </div>
       <svg width="100%" viewBox="0 0 ${W} ${H}" style="display:block;overflow:visible">
         <line x1="${PL}" y1="${H-14}" x2="${W-PR}" y2="${H-14}" stroke="#1e1e1e" stroke-width="1"/>
-        <polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.5" opacity=".5" stroke-linejoin="round"/>
+        <polyline points="${pts}" fill="none" stroke="${col}" stroke-width="3" opacity=".5" stroke-linejoin="round"/>
         ${dots}${xl}
       </svg>
     </div>`;
