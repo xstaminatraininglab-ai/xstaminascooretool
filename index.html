@@ -210,9 +210,9 @@ input.err,select.err{border-color:#ef4444!important}
 
 <div class="st">Test 1 — Plank Hold</div>
 <div class="card">
-  <div class="note"><strong>Standard:</strong> gomiti sotto spalle, corpo rigido. Una volta persa la posizione corretta (bacino che cede, schiena che si incurva) il test deve essere fermato. <strong>Max 300 sec (5 min).</strong></div>
+  <div class="note"><strong>Standard:</strong> gomiti sotto spalle, corpo rigido. Una volta persa la posizione corretta (bacino che cede, schiena che si incurva) il test deve essere fermato. <strong>Max 480 sec (8 min).</strong></div>
   <div class="r2">
-    <div class="field"><label class="lbl">Secondi — max 300</label><input id="f-plank" type="number" min="0" max="300" placeholder="68" oninput="clamp('f-plank',300);calc()"></div>
+    <div class="field"><label class="lbl">Secondi — max 480</label><input id="f-plank" type="number" min="0" max="480" placeholder="68" oninput="clamp('f-plank',480);calc()"></div>
     <div class="field"><label class="lbl">Fine test per</label>
       <select id="f-plank-end">
         <option value="form">Cedimento della forma</option>
@@ -351,7 +351,7 @@ input.err,select.err{border-color:#ef4444!important}
       <strong style="color:var(--tx)">Posizione:</strong> Gomiti direttamente sotto le spalle, avambracci a terra, corpo perfettamente allineato dalla testa ai talloni.<br>
       <strong style="color:var(--tx)">Esecuzione:</strong> Contrazione attiva di addome e glutei. Testa neutrale, sguardo verso il basso.<br>
       <strong style="color:var(--tx)">Stop immediato se:</strong> il bacino cede verso il basso o si solleva, la schiena si incurva, le spalle cedono o il collo si iperestende.<br>
-      <strong style="color:var(--tx)">Limite massimo:</strong> 300 secondi (5 minuti). Al raggiungimento il test si interrompe automaticamente.<br>
+      <strong style="color:var(--tx)">Limite massimo:</strong> 480 secondi (8 minuti). Al raggiungimento il test si interrompe automaticamente.<br>
       <strong style="color:var(--tx)">Registra:</strong> secondi totali e motivo di interruzione (cedimento forma / limite 5 min / interruzione volontaria).
     </div>
   </div>
@@ -862,9 +862,10 @@ function renderHistoryData(sessions, source){
     // Sort by date desc
     let idx_gs_counter=0;
     ss.sort((a,b)=>{
-      const da=a['Data Sessione']||a.date||a._saved||'';
-      const db=b['Data Sessione']||b.date||b._saved||'';
-      return da>db?-1:1;
+      const toMs=s=>{if(!s)return 0;const p=String(s).split('/');const iso=p.length===3?p[2]+'-'+p[1]+'-'+p[0]:s;const t=new Date(iso).getTime();return isNaN(t)?0:t;};
+      const da=toMs(a['Data Sessione']||a.date||a._saved||'');
+      const db=toMs(b['Data Sessione']||b.date||b._saved||'');
+      return db-da; // descending: newest first in list
     }).forEach(s=>{
       const idx_gs=isGs?(s._gsIdx!==undefined?s._gsIdx:-1):s._i;
       const dateRaw=s['Data Sessione']||s.date||s._saved||'';
@@ -1803,7 +1804,7 @@ function buildCharts(history){
   }
 
   return chart('Score Totale',scores,'#e8320a',100,false,'')
-    +chart('Plank (sec)',planks,'#60a5fa',300,false,'s')
+    +chart('Plank (sec)',planks,'#60a5fa',480,false,'s')
     +chart('Squat (reps/60s)',squats,'#4ade80',80,false,'')
     +chart('Push Up (reps/60s)',pushes,'#fbbf24',60,false,'')
     +(rows.some(r=>r>0)?chart('Row 500m (sec)',rows,'#f87171',250,true,'s'):'');
