@@ -116,6 +116,8 @@ input.err,select.err{border-color:#ef4444!important}
 <div id="tabs">
   <button class="tab on" id="t-ins" onclick="showTab('ins')">📋 Inserimento</button>
   <button class="tab" id="t-sto" onclick="showTab('sto')">📊 Storico</button>
+  <button class="tab" id="t-bac" onclick="showTab('bac')">🏆 Bacheca</button>
+  <button class="tab" id="t-age" onclick="showTab('age')">📅 Agenda</button>
   <button class="tab" id="t-istr" onclick="showTab('istr')">📋 Istruzioni</button>
   <button class="tab" id="t-set" onclick="showTab('set')">⚙️ Setup</button>
 </div>
@@ -332,6 +334,14 @@ input.err,select.err{border-color:#ef4444!important}
 </div></div>
 
 <!-- ISTRUZIONI -->
+<div class="page" id="page-bac">
+  <div id="bac-content"><div class="hist-empty">⏳ Carico bacheca...</div></div>
+</div>
+
+<div class="page" id="page-age">
+  <div id="age-content"><div class="hist-empty">⏳ Carico agenda...</div></div>
+</div>
+
 <div class="page" id="page-istr"><div class="wrap">
 
 <div class="st">Protocollo Test — Istruzioni Trainer</div>
@@ -605,11 +615,13 @@ function fn(x){return(!x||x===''||isNaN(parseFloat(x)))?'—':x}
 
 // ══════ UI ══════
 function showTab(t){
-  ['ins','sto','istr','set'].forEach(x=>{
+  ['ins','sto','bac','age','istr','set'].forEach(x=>{
     el('t-'+x).classList.toggle('on',x===t);
     el('page-'+x).classList.toggle('on',x===t);
   });
   if(t==='sto') renderHistory();
+  if(t==='bac') renderBacheca();
+  if(t==='age') renderAgenda();
 }
 
 function setV(test, val){
@@ -1827,5 +1839,142 @@ function calcAge(){
 
 loadClientNames();
 calc();
+
+// ══════ BACHECA ATLETICA ══════
+async function renderBacheca(){
+  const cont=el('bac-content');
+  cont.innerHTML='<div class="hist-empty">⏳ Carico dati...</div>';
+  try{
+    const j=await Promise.race([
+      jsonpFetch(GS_URL+'?action=all'),
+      new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),8000))
+    ]);
+    if(!j||!j.ok||!j.sessions||j.sessions.length===0){
+      cont.innerHTML='<div class="hist-empty">Nessun dato disponibile.</div>'; return;
+    }
+    // Best session per client
+    const best={};
+    j.sessions.forEach(s=>{
+      const n=(s['Cliente']||s['Nome e Cognome']||'').trim();
+      if(!n) return;
+      const score=parseInt(s['Score Totale']||0)||0;
+      const lv=score>=80?4:score>=63?3:score>=47?2:score>=30?1:0;
+      if(!best[n]||score>best[n].score)
+        best[n]={score,lv,trainer:s['Trainer']||'—',date:s['Data Sessione']||'—',gender:s['Genere']||''};
+    });
+    const athletes=Object.entries(best)
+      .filter(([,v])=>v.lv>=3)
+      .sort((a,b)=>b[1].score-a[1].score);
+    if(athletes.length===0){
+      cont.innerHTML='<div class="hist-empty">Nessun cliente ha ancora raggiunto ATHLETE o ELITE.</div>'; return;
+    }
+    const elites  =athletes.filter(([,v])=>v.lv===4);
+    const athlete_=athletes.filter(([,v])=>v.lv===3);
+    let out='<div style="padding:16px">';
+    const renderGroup=(title,icon,col,items)=>{
+      if(!items.length) return '';
+      let g=`<div style="font-family:'Bebas Neue';font-size:11px;letter-spacing:3px;color:${col};margin:20px 0 10px">${icon} ${title} (${items.length})</div>`;
+      items.forEach(([name,v])=>{
+        const initials=name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+        g+=`<div style="background:#fff;border:1px solid #e0ddd9;border-left:4px solid ${col};border-radius:10px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;gap:14px">
+          <div style="width:42px;height:42px;border-radius:50%;background:${col};color:#fff;font-family:'Bebas Neue';font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0">${initials}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;font-size:15px;margin-bottom:2px">${name}</div>
+            <div style="font-size:12px;color:#888">Trainer: ${v.trainer} · Ultimo test: ${v.date}</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0">
+            <div style="font-family:'Bebas Neue';font-size:32px;color:${col};line-height:1">${v.score}</div>
+            <div style="font-size:9px;letter-spacing:2px;color:#aaa">SCORE</div>
+          </div>
+        </div>`;
+      });
+      return g;
+    };
+    out+=renderGroup('ELITE','⚫','#1a1a1a',elites);
+    out+=renderGroup('ATHLETE','🟡','#f59e0b',athlete_);
+    out+='</div>';
+    cont.innerHTML=out;
+  }catch(e){
+    cont.innerHTML='<div class="hist-empty">Errore caricamento. Verifica connessione.</div>';
+  }
+}
+
+// ══════ AGENDA VALUTAZIONI ══════
+async function renderAgenda(){
+  const cont=el('age-content');
+  cont.innerHTML='<div class="hist-empty">⏳ Carico agenda...</div>';
+  try{
+    const j=await Promise.race([
+      jsonpFetch(GS_URL+'?action=all'),
+      new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),8000))
+    ]);
+    if(!j||!j.ok||!j.sessions||j.sessions.length===0){
+      cont.innerHTML='<div class="hist-empty">Nessun dato disponibile.</div>'; return;
+    }
+    const toMs=s=>{if(!s)return 0;const p=String(s).split('/');const iso=p.length===3?p[2]+'-'+p[1]+'-'+p[0]:s;const t=new Date(iso).getTime();return isNaN(t)?0:t;};
+    // Most recent session per client
+    const latest={};
+    j.sessions.forEach(s=>{
+      const n=(s['Cliente']||s['Nome e Cognome']||'').trim();
+      if(!n) return;
+      const ms=toMs(s['Data Sessione']||'');
+      if(!latest[n]||ms>latest[n].ms)
+        latest[n]={ms,nextDate:s['Prossima Valutazione']||'',trainer:s['Trainer']||'—',
+                   score:parseInt(s['Score Totale']||0)||0,lastDate:s['Data Sessione']||'—'};
+    });
+    const today=new Date(); today.setHours(0,0,0,0);
+    const in7=new Date(today); in7.setDate(in7.getDate()+7);
+    const in30=new Date(today); in30.setDate(in30.getDate()+30);
+    const groups={scadute:[],settimana:[],mese:[],oltre:[]};
+    Object.entries(latest).forEach(([name,v])=>{
+      if(!v.nextDate){groups.oltre.push({name,v}); return;}
+      const ms=toMs(v.nextDate);
+      if(!ms){groups.oltre.push({name,v}); return;}
+      const d=new Date(ms); d.setHours(0,0,0,0);
+      if(d<today) groups.scadute.push({name,v,d});
+      else if(d<=in7) groups.settimana.push({name,v,d});
+      else if(d<=in30) groups.mese.push({name,v,d});
+      else groups.oltre.push({name,v,d});
+    });
+    ['scadute','settimana','mese','oltre'].forEach(g=>{
+      groups[g].sort((a,b)=>(a.d?.getTime()||0)-(b.d?.getTime()||0));
+    });
+    const fmtDate=d=>{if(!d)return'—';return d.toLocaleDateString('it-IT',{day:'2-digit',month:'short',year:'numeric'});};
+    const renderSection=(title,icon,col,bg,items)=>{
+      if(!items.length) return '';
+      let s=`<div style="font-family:'Bebas Neue';font-size:11px;letter-spacing:3px;color:${col};margin:20px 0 10px;padding:0 16px">${icon} ${title} (${items.length})</div>`;
+      items.forEach(({name,v,d})=>{
+        const initials=name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+        const lv=v.score>=80?4:v.score>=63?3:v.score>=47?2:v.score>=30?1:0;
+        const lvColors=['#888','#22c55e','#60a5fa','#f59e0b','#1a1a1a'];
+        s+=`<div style="background:#fff;border:1px solid #e0ddd9;border-left:4px solid ${col};border-radius:10px;padding:12px 16px;margin:0 16px 10px;display:flex;align-items:center;gap:12px">
+          <div style="width:38px;height:38px;border-radius:50%;background:${col};color:#fff;font-family:'Bebas Neue';font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0">${initials}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;font-size:14px">${name}</div>
+            <div style="font-size:12px;color:#888">Trainer: ${v.trainer} · Ultimo: ${v.lastDate}</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0">
+            <div style="font-size:13px;font-weight:600;color:${col}">${d?fmtDate(d):'—'}</div>
+            <div style="font-size:10px;color:#aaa">${LV_ICON[lv]} ${LV_NAME[lv]} (${v.score})</div>
+          </div>
+        </div>`;
+      });
+      return s;
+    };
+    let out='<div style="padding-bottom:80px">';
+    out+=renderSection('SCADUTE','🔴','#ef4444','#fff5f5',groups.scadute);
+    out+=renderSection('QUESTA SETTIMANA','🟠','#f97316','#fff8f0',groups.settimana);
+    out+=renderSection('PROSSIMI 30 GIORNI','🟢','#22c55e','#f0fdf4',groups.mese);
+    out+=renderSection('DATA NON IMPOSTATA','⚪','#aaa','#f9f9f9',groups.oltre);
+    if(!groups.scadute.length&&!groups.settimana.length&&!groups.mese.length)
+      out+='<div class="hist-empty" style="margin:40px 16px">Nessuna valutazione imminente.</div>';
+    out+='</div>';
+    cont.innerHTML=out;
+  }catch(e){
+    cont.innerHTML='<div class="hist-empty">Errore caricamento. Verifica connessione.</div>';
+  }
+}
+
+
 </script>
 </body></html>
