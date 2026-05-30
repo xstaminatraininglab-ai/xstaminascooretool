@@ -1852,16 +1852,50 @@ async function renderBacheca(){
     if(!j||!j.ok||!j.sessions||j.sessions.length===0){
       cont.innerHTML='<div class="hist-empty">Nessun dato disponibile.</div>'; return;
     }
-    // Best session per client
+    // Best session per client — recalc with current scoring system
     const best={};
+    // Pre-build client sessions sorted for inject
+    const allByClient={};
     j.sessions.forEach(s=>{
       const n=(s['Cliente']||s['Nome e Cognome']||'').trim();
       if(!n) return;
-      const score=parseInt(s['Score Totale']||0)||0;
-      const lv=score>=80?4:score>=63?3:score>=47?2:score>=30?1:0;
-      if(!best[n]||score>best[n].score)
-        best[n]={score,lv,trainer:s['Trainer']||'—',date:s['Data Sessione']||'—',gender:s['Genere']||''};
+      if(!allByClient[n]) allByClient[n]=[];
+      allByClient[n].push(s);
     });
+    Object.values(allByClient).forEach(sess=>{
+      sess.sort((a,b)=>{const toMs=s=>{if(!s)return 0;const p=String(s).split('/');const iso=p.length===3?p[2]+'-'+p[1]+'-'+p[0]:s;const t=new Date(iso).getTime();return isNaN(t)?0:t;};return toMs(a['Data Sessione']||'')-toMs(b['Data Sessione']||'');});
+    });
+    j.sessions.forEach((s,si)=>{
+      const n=(s['Cliente']||s['Nome e Cognome']||'').trim();
+      if(!n) return;
+      try{
+        let rd=gsRowToD(s);
+        // Inject prevLean from previous session
+        const clientSess=allByClient[n]||[];
+        const ci=clientSess.indexOf(s);
+        if(ci>0){
+          const prev=clientSess[ci-1];
+          if(!rd.prevLean||rd.prevLean===0) rd.prevLean=parseFloat(prev['Massa Magra %'])||0;
+          if(rd.prevLean>0) rd.hasPrev=true;
+          rd=recalcScore(rd);
+        }
+        const score=isNaN(rd.total)?0:rd.total;
+        const lv=score>=80?4:score>=63?3:score>=47?2:score>=30?1:0;
+        if(!best[n]||score>best[n].score)
+          best[n]={score,lv,trainer:rd.trainer||'—',rawDate:s['Data Sessione']||'',gender:rd.gender||''};
+      }catch(e){
+        const score=parseInt(s['Score Totale']||0)||0;
+        const lv=score>=80?4:score>=63?3:score>=47?2:score>=30?1:0;
+        if(!best[n]||score>best[n].score)
+          best[n]={score,lv,trainer:s['Trainer']||'—',rawDate:s['Data Sessione']||'',gender:s['Genere']||''};
+      }
+    });
+    const fmtRawDate=s=>{
+        if(!s) return '—';
+        const t=new Date(s);
+        if(!isNaN(t.getTime())) return t.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'});
+        return String(s).slice(0,10)||'—';
+      };
     const athletes=Object.entries(best)
       .filter(([,v])=>v.lv>=3)
       .sort((a,b)=>b[1].score-a[1].score);
@@ -1880,7 +1914,7 @@ async function renderBacheca(){
           <div style="width:42px;height:42px;border-radius:50%;background:${col};color:#fff;font-family:'Bebas Neue';font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0">${initials}</div>
           <div style="flex:1;min-width:0">
             <div style="font-weight:600;font-size:15px;margin-bottom:2px">${name}</div>
-            <div style="font-size:12px;color:#888">Trainer: ${v.trainer} · Ultimo test: ${v.date}</div>
+            <div style="font-size:12px;color:#888">Trainer: ${v.trainer} · Ultimo test: ${fmtRawDate(v.rawDate)}</div>
           </div>
           <div style="text-align:right;flex-shrink:0">
             <div style="font-family:'Bebas Neue';font-size:32px;color:${col};line-height:1">${v.score}</div>
@@ -1913,6 +1947,12 @@ async function renderAgenda(){
     }
     const toMs=s=>{if(!s)return 0;const p=String(s).split('/');const iso=p.length===3?p[2]+'-'+p[1]+'-'+p[0]:s;const t=new Date(iso).getTime();return isNaN(t)?0:t;};
     // Most recent session per client
+    const fmtRawDate=s=>{
+        if(!s) return '—';
+        const t=new Date(s);
+        if(!isNaN(t.getTime())) return t.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'});
+        return String(s).slice(0,10)||'—';
+      };
     const latest={};
     j.sessions.forEach(s=>{
       const n=(s['Cliente']||s['Nome e Cognome']||'').trim();
@@ -1920,7 +1960,7 @@ async function renderAgenda(){
       const ms=toMs(s['Data Sessione']||'');
       if(!latest[n]||ms>latest[n].ms)
         latest[n]={ms,nextDate:s['Prossima Valutazione']||'',trainer:s['Trainer']||'—',
-                   score:parseInt(s['Score Totale']||0)||0,lastDate:s['Data Sessione']||'—'};
+                   score:parseInt(s['Score Totale']||0)||0,lastDate:s['Data Sessione']||''};
     });
     const today=new Date(); today.setHours(0,0,0,0);
     const in7=new Date(today); in7.setDate(in7.getDate()+7);
@@ -1951,7 +1991,7 @@ async function renderAgenda(){
           <div style="width:38px;height:38px;border-radius:50%;background:${col};color:#fff;font-family:'Bebas Neue';font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0">${initials}</div>
           <div style="flex:1;min-width:0">
             <div style="font-weight:600;font-size:14px">${name}</div>
-            <div style="font-size:12px;color:#888">Trainer: ${v.trainer} · Ultimo: ${v.lastDate}</div>
+            <div style="font-size:12px;color:#888">Trainer: ${v.trainer} · Ultimo: ${fmtRawDate(v.lastDate)}</div>
           </div>
           <div style="text-align:right;flex-shrink:0">
             <div style="font-size:13px;font-weight:600;color:${col}">${d?fmtDate(d):'—'}</div>
