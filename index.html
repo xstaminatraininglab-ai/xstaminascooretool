@@ -1896,25 +1896,50 @@ async function renderBacheca(){
         if(!isNaN(t.getTime())) return t.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'});
         return String(s).slice(0,10)||'—';
       };
-    const athletes=Object.entries(best)
+    // Also track latest session per client
+    const latest_={};
+    Object.entries(allByClient).forEach(([name,sess])=>{
+      const last=sess[sess.length-1]; // already sorted ascending
+      try{
+        let rd=gsRowToD(last);
+        if(sess.length>1){
+          const prev=sess[sess.length-2];
+          if(!rd.prevLean||rd.prevLean===0) rd.prevLean=parseFloat(prev['Massa Magra %'])||0;
+          if(rd.prevLean>0) rd.hasPrev=true;
+          rd=recalcScore(rd);
+        }
+        const score=isNaN(rd.total)?0:rd.total;
+        latest_[name]={score,lv:score>=80?4:score>=63?3:score>=47?2:score>=30?1:0,
+                       trainer:rd.trainer||'—',rawDate:last['Data Sessione']||''};
+      }catch(e){
+        const score=parseInt(last['Score Totale']||0)||0;
+        latest_[name]={score,lv:score>=80?4:score>=63?3:score>=47?2:score>=30?1:0,
+                       trainer:last['Trainer']||'—',rawDate:last['Data Sessione']||''};
+      }
+    });
+    // Current ATHLETE/ELITE = latest session is ≥ 3
+    const currentAthletes=Object.entries(latest_)
       .filter(([,v])=>v.lv>=3)
       .sort((a,b)=>b[1].score-a[1].score);
-    if(athletes.length===0){
+    // Former = ever reached ≥3 but latest is <3
+    const formerAthletes=Object.entries(best)
+      .filter(([name,v])=>v.lv>=3 && (!latest_[name]||latest_[name].lv<3))
+      .sort((a,b)=>b[1].score-a[1].score);
+    if(currentAthletes.length===0 && formerAthletes.length===0){
       cont.innerHTML='<div class="hist-empty">Nessun cliente ha ancora raggiunto ATHLETE o ELITE.</div>'; return;
     }
-    const elites  =athletes.filter(([,v])=>v.lv===4);
-    const athlete_=athletes.filter(([,v])=>v.lv===3);
-    let out='<div style="padding:16px">';
-    const renderGroup=(title,icon,col,items)=>{
+    const renderGroup=(title,icon,col,items,showBest)=>{
       if(!items.length) return '';
       let g=`<div style="font-family:'Bebas Neue';font-size:11px;letter-spacing:3px;color:${col};margin:20px 0 10px">${icon} ${title} (${items.length})</div>`;
       items.forEach(([name,v])=>{
         const initials=name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
-        g+=`<div style="background:#fff;border:1px solid #e0ddd9;border-left:4px solid ${col};border-radius:10px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;gap:14px">
+        const bestScore=showBest?best[name]?.score:null;
+        g+=`<div style="background:#fff;border:1px solid #e0ddd9;border-left:4px solid ${col};border-radius:10px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;gap:14px${showBest?';opacity:.7':''}">
           <div style="width:42px;height:42px;border-radius:50%;background:${col};color:#fff;font-family:'Bebas Neue';font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0">${initials}</div>
           <div style="flex:1;min-width:0">
             <div style="font-weight:600;font-size:15px;margin-bottom:2px">${name}</div>
             <div style="font-size:12px;color:#888">Trainer: ${v.trainer} · Ultimo test: ${fmtRawDate(v.rawDate)}</div>
+            ${showBest?`<div style="font-size:11px;color:#aaa">Best: ${bestScore} · Ora: ${LV_NAME[latest_[name]?.lv||0]} (${latest_[name]?.score||0})</div>`:''}
           </div>
           <div style="text-align:right;flex-shrink:0">
             <div style="font-family:'Bebas Neue';font-size:32px;color:${col};line-height:1">${v.score}</div>
@@ -1924,8 +1949,25 @@ async function renderBacheca(){
       });
       return g;
     };
-    out+=renderGroup('ELITE','⚫','#1a1a1a',elites);
-    out+=renderGroup('ATHLETE','🟡','#f59e0b',athlete_);
+    const currElites  =currentAthletes.filter(([,v])=>v.lv===4);
+    const currAthlete_=currentAthletes.filter(([,v])=>v.lv===3);
+    let out='<div style="padding:16px">';
+    out+=renderGroup('ELITE','⚫','#1a1a1a',currElites,false);
+    out+=renderGroup('ATHLETE','🟡','#f59e0b',currAthlete_,false);
+    if(formerAthletes.length){
+      out+=`<div style="font-family:'Bebas Neue';font-size:11px;letter-spacing:3px;color:#bbb;margin:28px 0 10px;padding-top:16px;border-top:1px solid #e0ddd9">📉 EX ATHLETE/ELITE (${formerAthletes.length})</div>`;
+      formerAthletes.forEach(([name,v])=>{
+        const initials=name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+        const lvNow=latest_[name]||{score:0,lv:0};
+        out+=`<div style="background:#f9f8f6;border:1px solid #e0ddd9;border-left:4px solid #ddd;border-radius:10px;padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:14px;opacity:.75">
+          <div style="width:38px;height:38px;border-radius:50%;background:#ddd;color:#888;font-family:'Bebas Neue';font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0">${initials}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;font-size:14px;color:#555">${name}</div>
+            <div style="font-size:11px;color:#aaa">Best: ${LV_ICON[v.lv]} ${v.score} · Ora: ${LV_NAME[lvNow.lv]} (${lvNow.score})</div>
+          </div>
+        </div>`;
+      });
+    }
     out+='</div>';
     cont.innerHTML=out;
   }catch(e){
