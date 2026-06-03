@@ -2000,9 +2000,18 @@ async function renderAgenda(){
       const n=(s['Cliente']||s['Nome e Cognome']||'').trim();
       if(!n) return;
       const ms=toMs(s['Data Sessione']||'');
-      if(!latest[n]||ms>latest[n].ms)
-        latest[n]={ms,nextDate:s['Prossima Valutazione']||'',trainer:s['Trainer']||'—',
+      if(!latest[n]||ms>latest[n].ms){
+        const savedNext=s['Prossima Valutazione']||'';
+        // If no saved next date, calculate lastDate + 28 days
+        let calcNext=savedNext;
+        if(!calcNext&&ms>0){
+          const nd=new Date(ms); nd.setDate(nd.getDate()+28);
+          calcNext=nd.toISOString().slice(0,10);
+        }
+        latest[n]={ms,nextDate:calcNext,nextIsCalc:!savedNext,
+                   trainer:s['Trainer']||'—',
                    score:parseInt(s['Score Totale']||0)||0,lastDate:s['Data Sessione']||''};
+      }
     });
     const today=new Date(); today.setHours(0,0,0,0);
     const in7=new Date(today); in7.setDate(in7.getDate()+7);
@@ -2037,7 +2046,7 @@ async function renderAgenda(){
           </div>
           <div style="text-align:right;flex-shrink:0">
             <div style="font-size:13px;font-weight:600;color:${col}">${d?fmtDate(d):'—'}</div>
-            <div style="font-size:10px;color:#aaa">${LV_ICON[lv]} ${LV_NAME[lv]} (${v.score})</div>
+            <div style="font-size:10px;color:#aaa">${LV_ICON[lv]} ${LV_NAME[lv]} (${v.score})${v.nextIsCalc?' · stima':''}  </div>
           </div>
         </div>`;
       });
