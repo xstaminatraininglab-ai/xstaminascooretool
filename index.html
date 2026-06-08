@@ -1304,9 +1304,10 @@ async function deleteGsReport(idx){
 
 function viewGsReport(key){_viewGsReportAsync(parseInt(key));}
 async function _viewGsReportAsync(key){
+  try{
   // Look up session from stable map (immune to _gsAllSessions reloads)
   const s=_gsRenderedSessions[key];
-  if(!s){ console.warn('Session not found, key:',key); return; }
+  if(!s){ alert('Sessione non trovata (key='+key+'). Ricarica lo storico.'); return; }
   const _rawName=(s['Cliente']||s['Nome e Cognome']||'').trim();
   let d=gsRowToD(s);
   // Build client history for charts from all gs sessions of same client
@@ -1367,6 +1368,10 @@ async function _viewGsReportAsync(key){
   _clientHistory=prevHistory;
   _currentReportHtml=reportHtml;
   showReportOverlay(reportHtml);
+  }catch(err){
+    console.error('_viewGsReportAsync error:',err);
+    alert('Errore apertura report: '+err.message);
+  }
 }
 
 function closeReport(){
