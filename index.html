@@ -528,6 +528,7 @@ const ROW_COEFF = {rw:1.0, ski:0.93};
 // ══════ STATE ══════
 const V = {sq:'std', pu:'std', row:'rw'};
 let _D=null, _clientHistory=[], _loadedClient=null, _allScores=[], _clientNames=[], _nameTimer=null,_gsAllSessions=[];
+let _gsSessionMap=new Map(),_gsSessionMapCounter=0;
 let _currentReportHtml='';
 
 // ══════ HELPERS ══════
@@ -879,7 +880,14 @@ function renderHistoryData(sessions, source){
       const db=toMs(b['Data Sessione']||b.date||b._saved||'');
       return db-da; // descending: newest first in list
     }).forEach(s=>{
-      const idx_gs=isGs?(s._gsIdx!==undefined?s._gsIdx:-1):s._i;
+      // Store session in stable map to avoid array-index instability
+      let idx_gs;
+      if(isGs){
+        idx_gs=_gsSessionMapCounter++;
+        _gsSessionMap.set(idx_gs,s);
+      } else {
+        idx_gs=s._i;
+      }
       const dateRaw=s['Data Sessione']||s.date||s._saved||'';
       let d='—';
       try{
@@ -910,11 +918,8 @@ function renderHistoryData(sessions, source){
       // Determine level from score if finalLv not stored
       const lv=scoreRaw>=80?4:scoreRaw>=63?3:scoreRaw>=47?2:scoreRaw>=30?1:0;
       const trainer=s['Trainer']||s.trainer||'—';
-      // Use stable fingerprint instead of array index (index changes on reload)
-      const _fp=isGs?encodeURIComponent((s['Cliente']||s['Nome e Cognome']||'')+
-        '||'+(s['Data Sessione']||'')+'||'+(s['N° Sessione']||'')):'';
       const rowClick=isGs
-        ?`onclick="viewGsReport('${_fp}')"`
+        ?`onclick="viewGsReport(${idx_gs})"`
         :`onclick="viewSessionReport(${s._i})"`;
       out+=`<div class="hrow2${isGs?" gs":""}" style="position:relative">
         <div style="display:contents;cursor:pointer" ${rowClick}>
@@ -923,7 +928,7 @@ function renderHistoryData(sessions, source){
           <span style="font-family:'DM Mono';font-weight:600;color:${LV_COL[lv]}">${scoreRaw||'—'}</span>
           <span><span class="bs ${LV_CSS[lv]}">${LV_ICON[lv]} ${LV_NAME[lv]}</span></span>
         </div>
-        ${isGs?`<span onclick="event.stopPropagation();confirmDeleteReport('${_fp}')" title="Elimina questo report" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);cursor:pointer;color:#555;font-size:14px;padding:4px 6px;border-radius:4px;line-height:1" onmouseover="this.style.color='#e8320a'" onmouseout="this.style.color='#555'">🗑</span>`:''}
+        ${isGs?`<span onclick="event.stopPropagation();confirmDeleteReport(${idx_gs})" title="Elimina questo report" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);cursor:pointer;color:#555;font-size:14px;padding:4px 6px;border-radius:4px;line-height:1" onmouseover="this.style.color='#e8320a'" onmouseout="this.style.color='#555'">🗑</span>`:''}
       </div>`;
     });
     out+=`</div></div>`;
@@ -941,6 +946,7 @@ async function renderHistory(){
     ]);
     if(j&&j.ok&&j.sessions&&j.sessions.length>0){
       _gsAllSessions=j.sessions.map((s,i)=>({...s,_gsIdx:i}));
+      _gsSessionMap=new Map();_gsSessionMapCounter=0;
       renderHistoryData(_gsAllSessions,'gs');
       return;
     }
@@ -1272,12 +1278,8 @@ function addToCalendar(){
 
 
 
-function confirmDeleteReport(fp){
-  const fpDec=decodeURIComponent(fp||'');
-  const s=_gsAllSessions.find(x=>{
-    const xfp=(x['Cliente']||x['Nome e Cognome']||'')+'||'+(x['Data Sessione']||'')+'||'+(x['N° Sessione']||'');
-    return xfp===fpDec;
-  });
+function confirmDeleteReport(key){
+  const s=_gsSessionMap.get(parseInt(key));
   if(!s) return;
   const nm=s['Cliente']||s['Nome e Cognome']||'cliente';
   const dt=s['Data Sessione']||'data sconosciuta';
@@ -1308,15 +1310,11 @@ async function deleteGsReport(idx){
   }
 }
 
-function viewGsReport(fp){_viewGsReportAsync(fp);}
-async function _viewGsReportAsync(fp){
-  // Find session by stable fingerprint (client||date||sessionNum)
-  const fpDec=decodeURIComponent(fp||'');
-  const s=_gsAllSessions.find(x=>{
-    const xfp=(x['Cliente']||x['Nome e Cognome']||'')+'||'+(x['Data Sessione']||'')+'||'+(x['N° Sessione']||'');
-    return xfp===fpDec;
-  });
-  if(!s){ console.warn('Session not found by fingerprint:',fpDec); return; }
+function viewGsReport(key){_viewGsReportAsync(parseInt(key));}
+async function _viewGsReportAsync(key){
+  // Look up session from stable map (immune to _gsAllSessions reloads)
+  const s=_gsSessionMap.get(key);
+  if(!s){ console.warn('Session not found in map, key:',key); return; }
   const _rawName=(s['Cliente']||s['Nome e Cognome']||'').trim();
   let d=gsRowToD(s);
   // Build client history for charts from all gs sessions of same client
