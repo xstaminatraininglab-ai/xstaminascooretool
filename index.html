@@ -218,7 +218,7 @@ input.err,select.err{border-color:#ef4444!important}
     <div class="field"><label class="lbl">Fine test per</label>
       <select id="f-plank-end">
         <option value="form">Cedimento della forma</option>
-        <option value="time">Limite 5 min raggiunto</option>
+        <option value="time">Limite 8 min raggiunto</option>
         <option value="vol">Interruzione volontaria</option>
       </select>
     </div>
@@ -235,9 +235,9 @@ input.err,select.err{border-color:#ef4444!important}
   <div class="note"><strong>Standard:</strong> touch wallball alla profondità parallela, risalita completa. Solo reps corrette in 60 sec.</div>
   <div class="vtog">
     <div class="vbtn easy on" id="sq-a" onclick="setV('sq','std')">Squat Standard<small>corpo libero · ×1.00</small></div>
-    <div class="vbtn easy" id="sq-b" onclick="setV('sq','sup')">Squat Supportato<small>panca · ×0.85 ↓</small></div>
-    <div class="vbtn hard" id="sq-c" onclick="setV('sq','z5')">Squat + Zavorra 5 kg<small>gilet/manubri · ×1.20 ↑</small></div>
-    <div class="vbtn hard" id="sq-d" onclick="setV('sq','z10')">Squat + Zavorra 10 kg<small>bilanciere/gilet · ×1.35 ↑</small></div>
+    <div class="vbtn easy" id="sq-b" onclick="setV('sq','sup')">Squat Supportato<small>panca · ×0.80 ↓</small></div>
+    <div class="vbtn hard" id="sq-c" onclick="setV('sq','z5')">Squat + Zavorra 5 kg<small>gilet/manubri · ×1.15 ↑</small></div>
+    <div class="vbtn hard" id="sq-d" onclick="setV('sq','z10')">Squat + Zavorra 10 kg<small>bilanciere/gilet · ×1.25 ↑</small></div>
   </div>
   <div class="r1"><div class="field"><label class="lbl">Ripetizioni corrette in 60 sec</label><input id="f-squat" type="number" min="0" max="120" placeholder="22" oninput="calc()"></div></div>
   <label class="ptog"><input type="checkbox" id="cb-squat" onchange="togglePrev('pb-squat',this)"> Dati sessione precedente</label>
@@ -284,7 +284,7 @@ input.err,select.err{border-color:#ef4444!important}
   <div class="note"><strong>PM5:</strong> Select Workout → New Workout → Fixed Distance → 500m. <strong>Damper livello 5.</strong></div>
   <div class="vtog" style="grid-template-columns:1fr 1fr">
     <div class="vbtn on" id="rw-a" onclick="setV('row','rw')">RowErg (Vogatore)<small>predefinito · ×1.00</small></div>
-    <div class="vbtn hard" id="rw-b" onclick="setV('row','ski')">SkiErg<small>coeff. ×0.88</small></div>
+    <div class="vbtn hard" id="rw-b" onclick="setV('row','ski')">SkiErg<small>coeff. ×0.93</small></div>
   </div>
   <div class="r2">
     <div class="field"><label class="lbl">Minuti</label><input id="f-rmin" type="number" min="0" max="9" placeholder="2" oninput="calc()"></div>
@@ -362,7 +362,7 @@ input.err,select.err{border-color:#ef4444!important}
       <strong style="color:var(--tx)">Esecuzione:</strong> Contrazione attiva di addome e glutei. Testa neutrale, sguardo verso il basso.<br>
       <strong style="color:var(--tx)">Stop immediato se:</strong> il bacino cede verso il basso o si solleva, la schiena si incurva, le spalle cedono o il collo si iperestende.<br>
       <strong style="color:var(--tx)">Limite massimo:</strong> 480 secondi (8 minuti). Al raggiungimento il test si interrompe automaticamente.<br>
-      <strong style="color:var(--tx)">Registra:</strong> secondi totali e motivo di interruzione (cedimento forma / limite 5 min / interruzione volontaria).
+      <strong style="color:var(--tx)">Registra:</strong> secondi totali e motivo di interruzione (cedimento forma / limite 8 min / interruzione volontaria).
     </div>
   </div>
   <div style="padding:14px;border-bottom:1px solid var(--bd)">
@@ -371,7 +371,7 @@ input.err,select.err{border-color:#ef4444!important}
       <strong style="color:var(--tx)">Setup:</strong> Posiziona una wallball contro il muro all'altezza che corrisponde alla profondità parallela del cliente (coscia parallela al suolo).<br>
       <strong style="color:var(--tx)">Esecuzione:</strong> Piedi larghezza spalle, punte leggermente extraruotate. Discesa fino al touch della wallball, risalita completa con ginocchia estese. Nessuna pausa in basso.<br>
       <strong style="color:var(--tx)">Rep valida:</strong> touch confermato + risalita completa. Non contare rep parziali.<br>
-      <strong style="color:var(--tx)">Varianti:</strong> Supportato (panca) per chi non riesce la profondità parallela ×0.85 | +5 kg (gilet o manubri tenuti al petto) ×1.20 | +10 kg (bilanciere frontale o gilet) ×1.35.<br>
+      <strong style="color:var(--tx)">Varianti:</strong> Supportato (panca) per chi non riesce la profondità parallela ×0.80 | +5 kg (gilet o manubri tenuti al petto) ×1.15 | +10 kg (bilanciere frontale o gilet) ×1.25.<br>
       <strong style="color:var(--tx)">Registra:</strong> solo reps corrette in 60 secondi e variante utilizzata.
     </div>
   </div>
@@ -389,7 +389,7 @@ input.err,select.err{border-color:#ef4444!important}
     <div style="font-family:'Bebas Neue';font-size:13px;letter-spacing:2px;color:#e8320a;margin-bottom:8px">TEST 4 — ROW / SKIERG 500m</div>
     <div style="font-size:12px;color:var(--mu);line-height:1.8">
       <strong style="color:var(--tx)">Setup RowErg:</strong> PM5 acceso → Select Workout → New Workout → Fixed Distance → 500m. Damper al livello 5. Pioli regolati in modo che le ginocchia siano a 90° nella fase di catch.<br>
-      <strong style="color:var(--tx)">Setup SkiErg:</strong> Stessa procedura sul PM5. Il coefficiente ×0.88 viene applicato automaticamente dal sistema.<br>
+      <strong style="color:var(--tx)">Setup SkiErg:</strong> Stessa procedura sul PM5. Il coefficiente ×0.93 viene applicato automaticamente dal sistema.<br>
       <strong style="color:var(--tx)">Esecuzione RowErg:</strong> Fase drive: spinta con le gambe → apertura del busto → trazione delle braccia fino all'ombelico. Fase recovery: braccia avanti → busto in avanti → gambe che si piegano. Ritmo controllato, non isterico.<br>
       <strong style="color:var(--tx)">Warm up:</strong> consigliato 2-3 minuti di vogata leggera prima del test.<br>
       <strong style="color:var(--tx)">Registra:</strong> tempo esatto dal display PM5 in formato min:sec.
@@ -823,7 +823,7 @@ function gsRowToD(s){
     pPlank:    s['Plank Precedente']||'',
     squat:     parseInt(s['Squat reps'])||0,
     sqVariant: sqVMap[s['Squat Variante']]||'std',
-    sqC:       s['Squat Variante']==='Supportato'?.85:s['Squat Variante']==='+5 kg'?1.2:s['Squat Variante']==='+10 kg'?1.35:1,
+    sqC:       s['Squat Variante']==='Supportato'?.85:s['Squat Variante']==='+5 kg'?1.15:s['Squat Variante']==='+10 kg'?1.25:1,
     pSquat:    s['Squat Precedente']||'',
     push:      parseInt(s['Push Up reps'])||0,
     puVariant: puVMap[s['Push Variante']]||'std',
@@ -915,13 +915,11 @@ function renderHistoryData(sessions, source){
       const rowClick=isGs
         ?`onclick="viewGsReport(${idx_gs})"`
         :`onclick="viewSessionReport(${s._i})"`;
-      out+=`<div class="hrow2${isGs?" gs":""}" style="position:relative">
-        <div style="display:contents;cursor:pointer" ${rowClick}>
+      out+=`<div class="hrow2${isGs?" gs":""}" style="position:relative;cursor:pointer" ${rowClick}>
           <span style="color:var(--mu)">${d}</span>
           <span style="color:var(--mu);font-size:12px">${trainer}</span>
           <span style="font-family:'DM Mono';font-weight:600;color:${LV_COL[lv]}">${scoreRaw||'—'}</span>
           <span><span class="bs ${LV_CSS[lv]}">${LV_ICON[lv]} ${LV_NAME[lv]}</span></span>
-        </div>
         ${isGs?`<span onclick="event.stopPropagation();confirmDeleteReport(${idx_gs})" title="Elimina questo report" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);cursor:pointer;color:#555;font-size:14px;padding:4px 6px;border-radius:4px;line-height:1" onmouseover="this.style.color='#e8320a'" onmouseout="this.style.color='#555'">🗑</span>`:''}
       </div>`;
     });
