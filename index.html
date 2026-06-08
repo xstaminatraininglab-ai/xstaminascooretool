@@ -1345,7 +1345,7 @@ async function _viewGsReportAsync(key){
       const toMs=s=>{if(!s)return 0;const p=String(s).split('/');const iso=p.length===3?p[2]+'-'+p[1]+'-'+p[0]:s;const t=new Date(iso).getTime();return isNaN(t)?0:t;};
       return toMs(a['Data Sessione']||'')-toMs(b['Data Sessione']||'');
     });
-  const sessIdx=clientSessions.findIndex(r=>r._gsIdx===idx);
+  const sessIdx=clientSessions.findIndex(r=>r._gsIdx===s._gsIdx);
   if(sessIdx>0){
     const prev=clientSessions[sessIdx-1];
     d.pVita   = prev['Vita cm']||'';
