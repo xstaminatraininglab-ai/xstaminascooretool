@@ -910,8 +910,11 @@ function renderHistoryData(sessions, source){
       // Determine level from score if finalLv not stored
       const lv=scoreRaw>=80?4:scoreRaw>=63?3:scoreRaw>=47?2:scoreRaw>=30?1:0;
       const trainer=s['Trainer']||s.trainer||'—';
+      // Use stable fingerprint instead of array index (index changes on reload)
+      const _fp=isGs?encodeURIComponent((s['Cliente']||s['Nome e Cognome']||'')+
+        '||'+(s['Data Sessione']||'')+'||'+(s['N° Sessione']||'')):'';
       const rowClick=isGs
-        ?`onclick="viewGsReport(${idx_gs})"`
+        ?`onclick="viewGsReport('${_fp}')"`
         :`onclick="viewSessionReport(${s._i})"`;
       out+=`<div class="hrow2${isGs?" gs":""}" style="position:relative">
         <div style="display:contents;cursor:pointer" ${rowClick}>
@@ -920,7 +923,7 @@ function renderHistoryData(sessions, source){
           <span style="font-family:'DM Mono';font-weight:600;color:${LV_COL[lv]}">${scoreRaw||'—'}</span>
           <span><span class="bs ${LV_CSS[lv]}">${LV_ICON[lv]} ${LV_NAME[lv]}</span></span>
         </div>
-        ${isGs?`<span onclick="event.stopPropagation();confirmDeleteReport(${idx_gs})" title="Elimina questo report" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);cursor:pointer;color:#555;font-size:14px;padding:4px 6px;border-radius:4px;line-height:1" onmouseover="this.style.color='#e8320a'" onmouseout="this.style.color='#555'">🗑</span>`:''}
+        ${isGs?`<span onclick="event.stopPropagation();confirmDeleteReport('${_fp}')" title="Elimina questo report" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);cursor:pointer;color:#555;font-size:14px;padding:4px 6px;border-radius:4px;line-height:1" onmouseover="this.style.color='#e8320a'" onmouseout="this.style.color='#555'">🗑</span>`:''}
       </div>`;
     });
     out+=`</div></div>`;
@@ -1269,8 +1272,12 @@ function addToCalendar(){
 
 
 
-function confirmDeleteReport(idx){
-  const s=_gsAllSessions.find(x=>x._gsIdx===parseInt(idx));
+function confirmDeleteReport(fp){
+  const fpDec=decodeURIComponent(fp||'');
+  const s=_gsAllSessions.find(x=>{
+    const xfp=(x['Cliente']||x['Nome e Cognome']||'')+'||'+(x['Data Sessione']||'')+'||'+(x['N° Sessione']||'');
+    return xfp===fpDec;
+  });
   if(!s) return;
   const nm=s['Cliente']||s['Nome e Cognome']||'cliente';
   const dt=s['Data Sessione']||'data sconosciuta';
@@ -1278,7 +1285,7 @@ function confirmDeleteReport(idx){
   if(!confirm(`Eliminare il report di ${nm} del ${dt} (score: ${sc})?
 
 Questa azione è irreversibile.`)) return;
-  deleteGsReport(idx);
+  deleteGsReport(s._gsIdx);
 }
 
 async function deleteGsReport(idx){
@@ -1301,10 +1308,15 @@ async function deleteGsReport(idx){
   }
 }
 
-function viewGsReport(idx){_viewGsReportAsync(parseInt(idx));}
-async function _viewGsReportAsync(idx){
-  const s=_gsAllSessions.find(x=>x._gsIdx===parseInt(idx));
-  if(!s){ console.warn('Session idx not found:',idx); return; }
+function viewGsReport(fp){_viewGsReportAsync(fp);}
+async function _viewGsReportAsync(fp){
+  // Find session by stable fingerprint (client||date||sessionNum)
+  const fpDec=decodeURIComponent(fp||'');
+  const s=_gsAllSessions.find(x=>{
+    const xfp=(x['Cliente']||x['Nome e Cognome']||'')+'||'+(x['Data Sessione']||'')+'||'+(x['N° Sessione']||'');
+    return xfp===fpDec;
+  });
+  if(!s){ console.warn('Session not found by fingerprint:',fpDec); return; }
   const _rawName=(s['Cliente']||s['Nome e Cognome']||'').trim();
   let d=gsRowToD(s);
   // Build client history for charts from all gs sessions of same client
