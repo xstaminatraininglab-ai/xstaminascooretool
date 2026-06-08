@@ -521,9 +521,9 @@ const THR = {
 };
 
 // Variant coefficients
-const SQ_COEFF = {std:1.0, sup:0.85, z5:1.20, z10:1.35};
+const SQ_COEFF = {std:1.0, sup:0.80, z5:1.15, z10:1.25};
 const PU_COEFF = {std:1.0, mod:0.80, elev:1.20, pike:1.40};
-const ROW_COEFF = {rw:1.0, ski:0.88};
+const ROW_COEFF = {rw:1.0, ski:0.93};
 
 // ══════ STATE ══════
 const V = {sq:'std', pu:'std', row:'rw'};
@@ -1147,10 +1147,21 @@ function autoFillPrevious(last){
     if(last["Row min:sec"]){const p=String(last["Row min:sec"]).split(':');if(p.length===2){el('cb-row').checked=true;el('pb-row').classList.add('open');el('p-rmin').value=p[0]||'';el('p-rsec').value=p[1]||'';el('p-row-var').value=last["Row Attrezzo"]==='SkiErg'?'ski':'rw'}}
     if(last["Vita cm"]){el('cb-circ').checked=true;el('pb-circ').classList.add('open');el('p-vita').value=last["Vita cm"]||'';el('p-seno').value=last["Seno cm"]||'';el('p-fianchi').value=last["Fianchi cm"]||'';el('p-coscia').value=last["Girocoscia cm"]||'';el('p-coscia2').value=last["Coscia Media cm"]||'';el('p-braccio').value=last["Braccio cm"]||''}
     if(last["N° Sessione"]) el('f-session').value=parseInt(last["N° Sessione"])+1;
-    if(last["Data di Nascita"]){el('f-dob').value=last["Data di Nascita"];calcAge()}
+    // DOB not in GSheets — look up from localStorage
+    const _clientNameLower=(last["Cliente"]||last["Nome e Cognome"]||'').toLowerCase().trim();
+    if(_clientNameLower){
+      try{
+        const _lh=JSON.parse(localStorage.getItem('xstamina_hist')||'[]');
+        const _ls=_lh.filter(s=>(s.name||'').toLowerCase().trim()===_clientNameLower&&s.dob);
+        if(_ls.length>0){el('f-dob').value=_ls[_ls.length-1].dob;calcAge();}
+      }catch(e){}
+    }
     if(last["Altezza"]){el('f-height').value=last["Altezza"]}
-    if(last["gender"]||last["Genere"]){el('f-gender').value=last["gender"]||last["Genere"]}
+    const _gRaw=last["gender"]||last["Genere"]||'';
+    const _gVal=_gRaw==='Donna'||_gRaw==='F'?'F':_gRaw==='Uomo'||_gRaw==='M'?'M':'';
+    if(_gVal){el('f-gender').value=_gVal;}
     if(last["Trainer"]&&!vs('f-trainer')){const sel=el('f-trainer');for(let i=0;i<sel.options.length;i++){if(sel.options[i].text===last["Trainer"]){sel.selectedIndex=i;break}}}
+    const _nd=new Date();_nd.setDate(_nd.getDate()+28);el('f-next-date').value=_nd.toISOString().slice(0,10);
   }
   calc();
 }
@@ -1292,11 +1303,12 @@ async function deleteGsReport(idx){
 
 function viewGsReport(idx){_viewGsReportAsync(parseInt(idx));}
 async function _viewGsReportAsync(idx){
-  const s=_gsAllSessions.find(x=>x._gsIdx===parseInt(idx))||_gsAllSessions[parseInt(idx)];
-  if(!s) return;
+  const s=_gsAllSessions.find(x=>x._gsIdx===parseInt(idx));
+  if(!s){ console.warn('Session idx not found:',idx); return; }
+  const _rawName=(s['Cliente']||s['Nome e Cognome']||'').trim();
   let d=gsRowToD(s);
   // Build client history for charts from all gs sessions of same client
-  const clientName=(d.name||'').toLowerCase();
+  const clientName=_rawName.toLowerCase();
   const prevHistory=_clientHistory;
   _clientHistory=_gsAllSessions
     .filter(r=>(r['Cliente']||r['Nome e Cognome']||r.name||'').toLowerCase()===clientName)
