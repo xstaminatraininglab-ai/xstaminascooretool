@@ -528,7 +528,7 @@ const ROW_COEFF = {rw:1.0, ski:0.93};
 // ══════ STATE ══════
 const V = {sq:'std', pu:'std', row:'rw'};
 let _D=null, _clientHistory=[], _loadedClient=null, _allScores=[], _clientNames=[], _nameTimer=null,_gsAllSessions=[];
-let _gsSessionMap=new Map(),_gsSessionMapCounter=0;
+let _gsRenderedSessions=[];
 let _currentReportHtml='';
 
 // ══════ HELPERS ══════
@@ -880,14 +880,8 @@ function renderHistoryData(sessions, source){
       const db=toMs(b['Data Sessione']||b.date||b._saved||'');
       return db-da; // descending: newest first in list
     }).forEach(s=>{
-      // Store session in stable map to avoid array-index instability
-      let idx_gs;
-      if(isGs){
-        idx_gs=_gsSessionMapCounter++;
-        _gsSessionMap.set(idx_gs,s);
-      } else {
-        idx_gs=s._i;
-      }
+      // Store session in stable array (immune to _gsAllSessions reloads)
+      const idx_gs=isGs?(_gsRenderedSessions.push(s)-1):s._i;
       const dateRaw=s['Data Sessione']||s.date||s._saved||'';
       let d='—';
       try{
@@ -946,7 +940,7 @@ async function renderHistory(){
     ]);
     if(j&&j.ok&&j.sessions&&j.sessions.length>0){
       _gsAllSessions=j.sessions.map((s,i)=>({...s,_gsIdx:i}));
-      _gsSessionMap=new Map();_gsSessionMapCounter=0;
+      _gsRenderedSessions=[];
       renderHistoryData(_gsAllSessions,'gs');
       return;
     }
@@ -1279,7 +1273,7 @@ function addToCalendar(){
 
 
 function confirmDeleteReport(key){
-  const s=_gsSessionMap.get(parseInt(key));
+  const s=_gsRenderedSessions[parseInt(key)];
   if(!s) return;
   const nm=s['Cliente']||s['Nome e Cognome']||'cliente';
   const dt=s['Data Sessione']||'data sconosciuta';
@@ -1313,8 +1307,8 @@ async function deleteGsReport(idx){
 function viewGsReport(key){_viewGsReportAsync(parseInt(key));}
 async function _viewGsReportAsync(key){
   // Look up session from stable map (immune to _gsAllSessions reloads)
-  const s=_gsSessionMap.get(key);
-  if(!s){ console.warn('Session not found in map, key:',key); return; }
+  const s=_gsRenderedSessions[key];
+  if(!s){ console.warn('Session not found, key:',key); return; }
   const _rawName=(s['Cliente']||s['Nome e Cognome']||'').trim();
   let d=gsRowToD(s);
   // Build client history for charts from all gs sessions of same client
