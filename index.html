@@ -1285,7 +1285,7 @@ Questa azione è irreversibile.`)) return;
 async function deleteGsReport(idx){
   const s=_gsAllSessions.find(x=>x._gsIdx===parseInt(idx));
   if(!s) return;
-  const rowNum=parseInt(idx)+1; // 1-based data row
+  const rowNum=s._gsIdx+2; // _gsIdx is 0-based; +1 for header, +1 for 1-based = +2
   try{
     const j=await jsonpFetch(GS_URL+'?action=delete&row='+rowNum);
     if(j&&j.ok){
