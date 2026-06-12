@@ -1050,7 +1050,7 @@ function onNameInput(){
   if(val.length>=2){
     const m=allNames.filter(n=>n.toLowerCase().includes(val.toLowerCase()));
     if(m.length){
-      el('name-dd').innerHTML=m.slice(0,6).map(n=>`<div class="dd-item" onmousedown="event.preventDefault();selectClient('${n.replace(/'/g,"\\'")}'')">${n}</div>`).join('');
+      el('name-dd').innerHTML=m.slice(0,6).map(n=>`<div class="dd-item" onmousedown="event.preventDefault();selectClient('${n.replace(/'/g,"\\'")}')">${n}</div>`).join('');
       el('name-dd').style.display='block';
     }else el('name-dd').style.display='none';
   }else el('name-dd').style.display='none';
